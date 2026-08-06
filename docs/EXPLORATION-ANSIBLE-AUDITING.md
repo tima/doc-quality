@@ -54,7 +54,7 @@ Current tools (doc-accuracy-audit v1.2) handle code + schemas. **Ansible require
 - Documented variables (especially in `defaults/`) match actual default values
 - Documented dependencies in role docs match `meta/main.yml` dependencies
 - Documented platforms/OS support match `meta/main.yml` metadata
-- Documented role interface (inputs: vars, outputs: facts/vars) matches task execution
+- Documented role interface (inputs: vars) matches `defaults/main.yml` — **Note: Output variable detection deferred to Phase 2+; outputs are conditionally set, often via handlers, and lack standardized documentation in the Ansible ecosystem**
 
 **Ghost/Hidden detection:**
 - Ghost: Docs claim role accepts `redis_port` variable; no default defined
@@ -113,9 +113,9 @@ Current tools (doc-accuracy-audit v1.2) handle code + schemas. **Ansible require
 |--------|------------------|------------------|-------------------------------------------|
 | **Format** | Source language (Python, Go) | JSON/YAML spec | YAML declarative + Python module code |
 | **Structure** | Functions, classes, files | Endpoint/schema definitions | Plays, tasks, roles, plugins, variables |
-| **Variables** | Function signatures, defaults | Schema fields, defaults | Ansible vars (defaults/, vars/, set_fact) |
+| **Variables** | Function signatures, defaults | Schema fields, defaults | Role input defaults (defaults/main.yml), role internal vars (vars/main.yml), runtime facts (set_fact) |
 | **Behavior** | Logic in code body | Logic in spec rules | Logic in task order, conditionals, handlers |
-| **Detection** | AST parsing, grep | YAML parsing, JSON parsing | YAML structure + semantic role knowledge |
+| **Detection** | AST parsing, grep | YAML parsing, JSON parsing | YAML structure + built-in Ansible conventions (tasks/main.yml, meta/main.yml, defaults/) |
 | **Ghost items** | "Function doesn't exist" | "Endpoint not in spec" | "Task name doesn't match", "Variable not defined" |
 | **Hidden items** | "Function not documented" | "Spec field not in docs" | "Role has undocumented variable", "Collection includes undocumented module" |
 
@@ -137,12 +137,12 @@ Current tools (doc-accuracy-audit v1.2) handle code + schemas. **Ansible require
 ```
 1. If galaxy.yml exists → collection
 2. If execution-environment.yml exists → execution environment
-3. If roles/{name}/meta/main.yml exists → role (or role collection)
+3. If roles/{name}/tasks/main.yml AND roles/{name}/meta/main.yml exist → role (or role collection)
 4. If playbooks/ exists or *.yml with plays exist → playbook project
 5. Else → ansible-project (generic)
 ```
 
-**Confidence:** High if manifest + consistent structure; medium if only directory pattern
+**Confidence:** High if manifest + consistent structure (e.g., both tasks/ and meta/ present for roles); medium if only directory pattern or partial structure
 
 ---
 
@@ -153,11 +153,11 @@ Current tools (doc-accuracy-audit v1.2) handle code + schemas. **Ansible require
 
 **Patterns to detect:**
 - **Playbook tasks:** Search for `- name:` lines in YAML files
-- **Role variables:** Parse `defaults/main.yml` for `var_name:` keys
+- **Role input variables:** Parse `defaults/main.yml` for `var_name:` keys (outputs deferred; see Limitations)
 - **Role meta:** Parse `meta/main.yml` for dependencies, platforms, tags
 - **Handlers:** Search for `- name:` in `handlers/main.yml`
 - **Collection modules:** List files in `plugins/modules/*.py` and extract module names
-- **EE packages:** Parse `requirements.txt`, `requirements.yml`, `execution-environment.yml`
+- **EE packages:** Parse `requirements.txt`, `requirements.yml`, `execution-environment.yml`; system packages in `_build/` require regex/heuristic parsing (lower confidence)
 
 **Tool options:**
 - `rg`/`grep` for simple name searches (task name = "task-name")
@@ -184,6 +184,37 @@ Current tools (doc-accuracy-audit v1.2) handle code + schemas. **Ansible require
 - Extract documented dependencies/platforms/version constraints from docs
 - Extract actual metadata from `galaxy.yml`, `meta/main.yml`, `execution-environment.yml`
 - Compare: mismatch if docs require Python 3.9 but EE uses 3.8
+
+---
+
+## Known Limitations (Phase 1+)
+
+### Role Output Detection
+Role outputs (facts/variables set via `set_fact:`, `register:`, handlers) are **not automatically detectable** in Phase 1. Reasons:
+- Variables are conditionally set (not all code paths set all outputs)
+- Handlers also set facts (scattered across files)
+- Loop variables and transient registers pollute `register:` lists
+- Ansible ecosystem has no standardized output documentation format
+
+**Mitigation:** Phase 1 focuses on **input variable validation** (defaults/main.yml). Output validation requires:
+- Explicit role interface documentation (README or role spec file)
+- Manual audit by role author
+- Deferred to Phase 2+ if formal Ansible output specs emerge
+
+### EE System Package Parsing
+System packages documented in `_build/` build scripts (e.g., `dnf install`, `apt-get install`) are harder to parse than `requirements.txt`:
+- Script format varies by base image (dnf, apt-get, yum, apk)
+- Package names may have version constraints or repository specs
+- Regex detection has lower confidence than YAML parsing
+
+**Mitigation:** Phase 1 handles `requirements.txt` and `requirements.yml` (YAML/text parsing). System package auditing uses heuristic grep with explicit confidence downgrade or deferred to Phase 2.
+
+### Playbook Multi-File Import/Include
+Playbooks split across multiple files via `import_playbooks:` or `include:` are not fully traceable without execution context. Detection must either:
+- Require a single playbook entry point, or
+- Scan all `*.yml` files in `playbooks/` and accept potential false positives (e.g., non-playbook YAML)
+
+**Decision deferred to Phase 1:** Will define scope based on test projects.
 
 ---
 
