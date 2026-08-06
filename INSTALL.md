@@ -40,6 +40,8 @@ ln -sf ~/projects/doc-quality/skills/doc-quality-revise ~/.claude/skills/doc-qua
 ln -sf ~/projects/doc-quality/skills/doc-quality-check ~/.claude/skills/doc-quality-check
 ```
 
+**Note:** The `~/.claude/skills/` path is for Claude Code (and some AI tools). For other tools supporting agent skills, replace `~/.claude/skills/` with your tool's skills directory (e.g., `~/.agentskills/`, `/opt/agent/skills/`, etc.).
+
 Local symlinks point to development branches and reload without re-installation.
 
 ## System Requirements
@@ -63,6 +65,8 @@ rm ~/.claude/skills/doc-quality-audit
 rm ~/.claude/skills/doc-quality-revise
 rm ~/.claude/skills/doc-quality-check
 ```
+
+(Replace `~/.claude/skills/` with your tool's skills directory if different.)
 
 ## Updating
 

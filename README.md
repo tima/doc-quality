@@ -115,6 +115,8 @@ ln -sf ~/projects/doc-quality/skills/doc-quality-revise ~/.claude/skills/doc-qua
 ln -sf ~/projects/doc-quality/skills/doc-quality-check ~/.claude/skills/doc-quality-check
 ```
 
+(Replace `~/.claude/skills/` with your tool's skills directory if different.)
+
 ### Uninstall
 
 **Registry installed:**
@@ -132,6 +134,8 @@ rm ~/.claude/skills/doc-quality-audit
 rm ~/.claude/skills/doc-quality-revise
 rm ~/.claude/skills/doc-quality-check
 ```
+
+(Replace `~/.claude/skills/` with your tool's skills directory if different.)
 
 See [INSTALL.md](INSTALL.md) for detailed installation, updating, and troubleshooting.
 
