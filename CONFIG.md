@@ -89,3 +89,21 @@ All audit findings are annotated with confidence based on verification method:
 - **Low Confidence** — Uncertain, requires manual review (e.g., parse failure, documentation ambiguity, tool unavailable)
 
 Every finding must cite its evidence source and state its confidence level before output.
+
+---
+
+## Severity Classification
+
+Quality audit findings are classified by impact (doc-quality-audit):
+
+- **Critical** — Issues that block understanding or cause user confusion: contradictory instructions, missing essential context, broken flow, terminology used before definition, sentences exceeding 40 words
+- **Moderate** — Issues that reduce effectiveness but don't block understanding: inconsistent terminology, tone shifts, unclear examples, poor structure, inappropriate passive voice
+- **Minor** — Polish issues, labeled as "Suggestion": formatting inconsistencies, stylistic preferences, minor readability improvements
+
+Accuracy audit findings are classified by type (doc-accuracy-audit):
+
+- **Ghost Item** — Documented but not in source code or spec
+- **Hidden Item** — Exists in source code or spec but not documented
+- **Mismatch** — Documented differently than the source (value, type, behavior, default)
+
+Combine severity/type with confidence level: `**CRITICAL GHOST ITEM (High Confidence):** ...`

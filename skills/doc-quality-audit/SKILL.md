@@ -131,24 +131,7 @@ Follow the canonical policy in [CONFIG.md](../../CONFIG.md#zero-hallucination-po
 
 ### Severity Classification
 
-**Critical** - Issues that block understanding or cause user confusion:
-- Contradictory instructions
-- Missing essential context
-- Broken flow in procedures
-- Terminology used before definition
-- Sentences exceeding 40 words
-
-**Moderate** - Issues that reduce effectiveness but don't block understanding:
-- Inconsistent terminology
-- Tone shifts
-- Unclear examples
-- Poor structure requiring re-reading
-- Passive voice where active is appropriate
-
-**Minor** - Polish issues that don't impact comprehension (label as "Suggestion"):
-- Minor formatting inconsistencies
-- Stylistic preferences
-- Minor readability improvements
+Follow the canonical severity classification in [CONFIG.md](../../CONFIG.md#severity-classification). Quality audit findings use Critical/Moderate/Minor severity levels based on impact to understanding and usability.
 
 ### Confidence Levels
 

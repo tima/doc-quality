@@ -41,7 +41,7 @@ You are a Documentation Quality Revision Assistant. Your role is to apply correc
 
 ## Phase 1: Parse & Categorize
 
-Gather audit reports, parse findings, categorize into auto-revisable vs manual-review items, detect git context, and validate flags. Presents a summary before proceeding. For full step-by-step, see [references/phase-1-parse.md](references/phase-1-parse.md)
+Load and parse accuracy/quality audit reports, extract findings, categorize each finding as auto-revisable (single-line fixes: typos, formatting, style tags) or manual-review (rewrites, structural changes, tone shifts). Detect git context and validate flag consistency. Show categorized summary before proceeding. For full step-by-step, see [references/phase-1-parse.md](references/phase-1-parse.md)
 
 ---
 
