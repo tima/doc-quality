@@ -10,10 +10,11 @@
 
 ## Archived Design Docs (Historical Reference)
 
-- `2026-06-15-doc-quality-check-design.md` — Pre-implementation design (June 15, 2026). No longer current; does not reflect verification passes or auto-detection added in later release.
+See [`archive/`](archive/) for pre-implementation design notes from June 2026:
+- `2026-06-15-doc-quality-check-design.md` — Pre-implementation design. Does not reflect verification passes or auto-detection added in later release.
 - `2026-06-15-doc-quality-check.md` — Early design notes. Superseded by SKILL.md files.
 
-These are preserved for historical context only. Do not follow them for implementation details.
+These are preserved for historical context only. Do not follow them for implementation details. **Current implementation is documented in [../skills/*/SKILL.md](../skills/) files.**
 
 ## Getting Started
 
