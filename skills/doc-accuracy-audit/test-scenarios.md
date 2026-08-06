@@ -1,6 +1,6 @@
 # Test Scenarios: doc-accuracy-audit Skill
 
-Validation test cases for each CLI framework. Run these to confirm skill works end-to-end.
+Validation test cases for CLI tools, Python libraries, and VS Code extensions. Run these to confirm skill works end-to-end across all supported project types.
 
 ---
 
@@ -166,14 +166,93 @@ bash skills/doc-accuracy-audit/lib/test-patterns.sh /tmp/kubectl-src/staging/src
 
 ---
 
+---
+
+## Test 7: Python Library (django-ansible-base)
+
+**Repo:** django-ansible-base  
+**Path:** ~/projects/django-ansible-base  
+**Doc path:** docs/ directory with API reference  
+**Type:** Python library (655 classes, 1867 functions)  
+**Expected outcome:** Detect python-library, find classes and functions, compare to docs
+
+**Manual setup:**
+```bash
+# Verify detection
+python3 skills/doc-accuracy-audit/lib/detect-cli-framework.py ~/projects/django-ansible-base
+# Should output: "type": "python-library", "confidence": "high"
+
+# Run test patterns
+bash skills/doc-accuracy-audit/lib/test-patterns.sh ~/projects/django-ansible-base
+# Should find: 655 class definitions, 1867 function definitions, 38 __all__ declarations
+```
+
+**Expected findings:**
+- Classes documented in API reference exist in code ✓
+- Methods listed for a class match class definition ✓
+- Symbols in __all__ exports are documented ✓
+- Undocumented public functions (helper library) reported as hidden
+
+**Test assertion:**
+- Skill detects python-library automatically
+- Skill finds class/function definitions using grep patterns
+- Verification pass confirms all findings cite grep evidence
+- Report distinguishes between classes and functions
+
+---
+
+## Test 8: VS Code Extension (vscode-ansible)
+
+**Repo:** vscode-ansible  
+**Path:** ~/projects/vscode-ansible  
+**Doc path:** README.md + docs/commands.md  
+**Type:** VS Code extension (60 registered commands)  
+**Expected outcome:** Detect vscode-extension, find commands/settings, compare to docs
+
+**Manual setup:**
+```bash
+# Verify detection
+python3 skills/doc-accuracy-audit/lib/detect-cli-framework.py ~/projects/vscode-ansible
+# Should output: "type": "vscode-extension", "confidence": "high"
+
+# Run test patterns
+bash skills/doc-accuracy-audit/lib/test-patterns.sh ~/projects/vscode-ansible
+# Should find: contributes declaration, activationEvents, 60 registerCommand calls
+```
+
+**Expected findings:**
+- Commands in package.json "contributes.commands" exist in code ✓
+- Command IDs match between docs and package.json ✓
+- Settings in contributes.configuration documented ✓
+- Undocumented activation events reported as hidden
+
+**Test assertion:**
+- Skill detects vscode-extension automatically
+- Skill finds contributions in package.json
+- Skill finds registerCommand calls in TypeScript
+- Verification pass cites grep results for each command
+
+---
+
 ## Phase 3 Checklist
 
+### CLI Tests
 - [ ] Test 1 (argparse): Manual run on ansible-creator passes
 - [ ] Test 2 (bash-dispatch): Manual run on dotpkg passes
 - [ ] Test 3 (cobra-go): Manual run on kubectl passes
+
+### Library & Extension Tests (NEW)
+- [ ] Test 7 (python-library): Manual run on django-ansible-base passes
+- [ ] Test 8 (vscode-extension): Manual run on vscode-ansible passes
+
+### Verification Tests
 - [ ] Test 4 (verification traceability): Fake finding removed
 - [ ] Test 5 (verification direction): Direction correct
 - [ ] Test 6 (exclusivity gate): Zero-match searches cited
+
+### Final Checks
 - [ ] All evals pass structural validation (json -c on evals.json)
 - [ ] Skill calls detect-cli-framework.py automatically (no manual selection)
-- [ ] Report includes framework detection result + patterns used
+- [ ] Detection works for CLI, library, and extension types
+- [ ] Report includes type detection result + patterns used
+- [ ] Quality-audit works on any project type (no code dependency)
