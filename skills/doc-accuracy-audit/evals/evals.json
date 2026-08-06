@@ -66,16 +66,16 @@
     },
     {
       "id": 10,
-      "type": "cli",
+      "type": "cli-exclusivity-gate",
       "prompt": "Audit docs for a CLI tool. The docs mention a --profile flag. I want to verify if that flag actually exists in the source code at /tmp/my-cli-src/. Just check whether --profile is real.",
-      "expected_output": "Skill must search the source code for --profile (using sg or rg) and explicitly state the search command and result count. A ghost finding for --profile requires: the exact search run, the file(s) searched, and the count (0 matches). The skill must NOT state '--profile is absent' without showing a confirmed search result.",
+      "expected_output": "Skill must search the source code for --profile (using sg or rg) and explicitly state the search command and result count in the finding. A ghost finding for --profile requires: the exact search run, the files searched, and the count (0 matches). The skill must NOT state '--profile is absent' without showing a confirmed search result. After verification pass, any ghost claim without a cited search result should be removed or downgraded to Low Confidence.",
       "files": []
     },
     {
       "id": 11,
-      "type": "cli-sg",
+      "type": "cli-sg-integration",
       "prompt": "Audit a Cobra CLI tool's flag documentation. Source is a local Go repo at /tmp/cobra-cli. I have sg (ast-grep) installed. Check if the flags in docs match what's registered in code.",
-      "expected_output": "When sg is available, the skill should use sg --lang go patterns for flag detection (StringVar, BoolVar, etc.) rather than plain grep. The audit output or process should reference sg commands. If sg is not available, the skill should mention ast-grep is not installed and use rg/grep with the encouraging install nudge.",
+      "expected_output": "When sg is available, the skill should use sg --lang go patterns for flag detection (StringVar, BoolVar, etc.) rather than plain grep. The audit process or report should reference sg commands being used for structural search. If sg is not available, the skill should mention ast-grep is not installed and provide the encouraging install nudge. The verification pass should confirm all findings cite sg (or rg fallback) results with match counts.",
       "files": []
     }
   ]

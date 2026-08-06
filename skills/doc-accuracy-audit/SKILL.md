@@ -128,17 +128,56 @@ Perform the requested tasks.
 
 **For CLI and Terraform project types only** (skip this section for API audits):
 
-Check for ast-grep availability:
+Search for source code patterns using text-based tools. `rg` (ripgrep) is preferred if available; `grep` is the fallback. Use `ast-grep` (AST-based structural matching) for complex syntactic patterns if installed, but text search is typically sufficient and more predictable.
+
+Check tool availability:
 
 ```bash
-command -v ast-grep >/dev/null 2>&1 && echo "ast-grep available" || echo "ast-grep not found"
+command -v rg >/dev/null 2>&1 && echo "rg available" || echo "Using grep"
+command -v ast-grep >/dev/null 2>&1 && echo "ast-grep available (optional)" || true
 ```
 
-- If available: use `ast-grep` for source code searches throughout this step.
-- If not found: "Note: `ast-grep` is not installed. Source searches will use `rg`/`grep` instead. Installing `ast-grep` gives syntax-aware structural search — results contain only real code constructs, not matches inside strings or comments, which reduces context noise. See https://ast-grep.github.io/guide/quick-start.html"
-- If found: proceed silently.
+**Recommended approach:**
+1. Use `rg` patterns defined in the framework-specific sections below (CLI Tools, Terraform Providers).
+2. If `rg` not available, substitute `grep -n` patterns (shown in each section).
+3. If `ast-grep` is installed and a pattern requires structural understanding, it can be used as an alternative, but is optional.
 
-**API audits:** Skip this check. API specs (YAML/JSON) are not supported by ast-grep; use standard parsing tools (jq, yq, grep) as described in the API audit section.
+**API audits:** Skip this check. API specs (YAML/JSON) are not supported by rg/ast-grep; use standard parsing tools (jq, yq, grep) as described in the API audit section.
+
+#### CLI Tools: Cobra (Go) Commands and Flags
+
+**Commands (Task 1):**
+```bash
+rg '\.AddCommand\(' --type go
+rg 'cobra\.Command\{' --type go
+grep -n "AddCommand(" *.go  # if rg unavailable
+```
+
+**Flags (Task 2):**
+```bash
+rg '\.Flags\(\)\.(StringVar|BoolVar|IntVar)' --type go
+rg '\.PersistentFlags\(\)\.' --type go
+grep -n "\.Flags()" *.go  # if rg unavailable
+```
+
+**Note on ast-grep:** ast-grep can structurally match call expressions but cobra patterns are complex; text search via `rg`/`grep` is more reliable and faster for this use case.
+
+#### Terraform Providers: Go Resources and Schema
+
+**Resources (Task 1):**
+```bash
+rg '"[A-Za-z_]+": \(' --type go  # schema.StringAttribute{...}
+rg 'ResourceMap\[' --type go     # resource registry patterns
+grep -n '"[a-z_]*":' *.go        # if rg unavailable
+```
+
+**Schema (Task 2):**
+```bash
+rg 'Description:|Type:|Required:|Optional:|Default:|ValidateFunc:' --type go
+grep -n "Description:\|Default:\|Required:" *.go  # if rg unavailable
+```
+
+**Note:** For definitive schema, prefer `terraform providers schema -json` (Task 2, Method 1 in skill description) when available. Go code inspection is a secondary verification.
 
 Follow these **Strict Adherence Rules** religiously:
 
@@ -340,24 +379,21 @@ If you cannot access documentation or the source of truth:
 
 **[Silent — no output to user. Run before writing any section.]**
 
-Before writing the audit report, perform one of the following verification modes based on audit scope:
-
-**Full verification mode** (≤50 items audited): Run all 6 checks below.
-**Spot-check mode** (>50 items audited): Run checks 1, 3, and 4 on High Confidence findings only.
-
-**The 6 verification checks:**
+Before writing the audit report, perform these 3 verification checks. These prevent hallucination (claims without evidence):
 
 1. **Traceability:** Every ghost/hidden/mismatch finding must cite a tool result — a grep/sg match, file path, schema field, or 0-result search count. A finding with no cited evidence must be removed or downgraded to Low Confidence with "Needs manual verification."
 
+   Example citation: `(searched: rg '\.AddCommand\(' src/ — 0 matches)` or `(inspected: acme/resource_certificate.go line 142 — no Default field)`
+
 2. **Direction accuracy:** Re-read evidence for every "Docs say X, source says Y" claim. These invert easily. The source of truth (code/spec) is always the right-hand side of "Source of Truth:". Flip any that are inverted.
 
-3. **Enumerated completeness:** Tally findings per category (ghost, hidden, mismatch). Summary counts must equal section item counts exactly. Correct any discrepancy before writing.
+   Example: If docs claim "required" and code shows `Required: false`, the finding should read:
+   **Doc Claim:** Required field
+   **Source of Truth:** Optional (Required: false in schema)
 
-4. **Exclusivity gate:** Any finding using "only", "not in", "missing", "absent", "not found", or "not documented" must cite the search command and its result count inline: `(searched: rg "flag-name" src/ — 0 matches)` or `(searched: sg --lang go -p '$PATTERN' . — 0 matches)`. A 0-result grep IS evidence; gate this check to logical scope-claims, not confirmatory 0-results.
+3. **Exclusivity gate:** Any finding using "only", "not in", "missing", "absent", "not found", or "not documented" must cite the search command and its result count inline: `(searched: rg "flag-name" src/ — 0 matches)` or `(searched: sg --lang go -p '$PATTERN' . — 0 matches)`. A 0-result grep IS evidence; gate this check to logical scope-claims, not confirmatory 0-results.
 
-5. **Verdict consistency:** Scan for any item appearing under more than one verdict column (e.g., same flag listed as both Ghost and Hidden). Remove duplicates; pick the verdict supported by evidence.
-
-6. **Named entity type:** Commands are commands, flags are flags, resources are resources, attributes are attributes. Check that entity type labels in findings match what was actually found in the source.
+   Example: A ghost finding for `--profile` flag requires: "Searched: rg '\..*profile' src/ — 0 matches across 45 Go files in the cmd/ directory"
 
 ### File naming
 
@@ -550,8 +586,9 @@ If the docs have multiple complex examples, ask the user which one to validate i
 5. **Include metadata footer** -- Always end the report with AI provider, model name, and timestamp.
 6. **Deliver the report as Markdown** -- Save it, then show the user the path and key findings.
 7. **Use domain-appropriate methods** -- Source code for CLI, schema inspection + Go code for Terraform, spec parsing for API.
-8. **Search tool policy (CLI/Terraform)** -- Use `ast-grep` for all source code searches on Go-based CLI and Terraform providers. Use `ast-grep scan --inline-rules` with `kind: call_expression` + `regex` patterns for structural matching. Fall back to `rg`/`grep` only when ast-grep is unavailable; note in the report which tool was used. API audits do not use ast-grep.
-9. **No emojis or icons** -- Use plain text verdicts and labels only. No decorative characters in the report or in conversational responses.
+8. **Search tool policy (CLI/Terraform):** Use `rg` (ripgrep) or `grep` for source code pattern search. The patterns in "Source Search Tool" subsection (Step 4) are optimized for text search. `ast-grep` is optional for complex structural patterns; if used, cite which tool was used in the report. API audits do not use code search tools.
+9. **Verification pass required** -- Before writing any report section, run the 3 checks in "Verify Before Writing Report": traceability, direction accuracy, exclusivity gate. All findings must cite search evidence inline.
+10. **No emojis or icons** -- Use plain text verdicts and labels only. No decorative characters in the report or in conversational responses.
 
 ---
 

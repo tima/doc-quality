@@ -109,7 +109,7 @@ Check for ast-grep availability:
 command -v ast-grep >/dev/null 2>&1 && echo "ast-grep available" || echo "ast-grep not found"
 ```
 
-- If available: use `ast-grep` for structural analysis of code examples within docs (when docs contain code in ast-grep-supported languages: Python, Go, JS, Rust, etc.).
+- If available: use `ast-grep` (via `sg` command) for structural analysis of code examples within docs (when docs contain code in ast-grep-supported languages: Python, Go, JS, Rust, etc.).
 - If not found: "Note: `ast-grep` is not installed. Code example searches will use `rg`/`grep`. See https://ast-grep.github.io/guide/quick-start.html"
 - If found: proceed silently.
 
@@ -287,13 +287,11 @@ For each group:
 
 **[Silent — no output to user. Run before screen summary and full report.]**
 
-Perform the following 3 verification checks before presenting any audit results:
-
-**The 3 checks:**
+Perform these 3 verification checks before presenting any audit results. These prevent hallucination (paraphrased quotes, uncalibrated confidence, count mismatches):
 
 1. **Quote traceability:** For every finding, the "Current Text" value must appear verbatim (or with only whitespace normalization) in the audited doc. Read back the relevant doc sections and confirm. Remove or rewrite any finding where the quoted text cannot be located.
 
-2. **Confidence calibration:** High Confidence findings must have a style guide rule citation (e.g., "Plain Language #1"). If a finding has no rule citation, it must be labeled Medium Confidence or Suggestion. Scan all High Confidence findings; downgrade any without a cited rule.
+2. **Confidence calibration:** High Confidence findings must have a style guide rule citation (e.g., "Plain Language #1" or "Clarity #3"). If a finding has no rule citation, it must be labeled Medium Confidence or Suggestion. Scan all High Confidence findings; downgrade any without a cited rule.
 
 3. **Count consistency:** Count Critical, Moderate, and Minor/Suggestion findings in the body. These must equal the summary numbers exactly. Correct the summary before output.
 
