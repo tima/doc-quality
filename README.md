@@ -1,10 +1,17 @@
 # Documentation Quality Skills
 
-A family of four skills for comprehensive documentation auditing and improvement.
+A suite of four skills for CLI documentation auditing with zero-hallucination verification and auto-framework detection.
+
+**What this does:**
+- Compares your documentation against actual CLI code (never hallucinates)
+- Auto-detects your CLI framework (argparse, Cobra, Bash, Click)
+- Audits for ghost items (documented but missing) and quality issues
+- Prevents tone shifts, clarity problems, and consistency gaps
+- Applies fixes interactively
 
 ## Skills
 
-- **[doc-accuracy-audit](skills/doc-accuracy-audit/SKILL.md)** — Cross-references docs against a source of truth (CLI code, Terraform schemas, OpenAPI specs). Finds ghost items (documented but missing), hidden items (exist but undocumented), and detail mismatches.
+- **[doc-accuracy-audit](skills/doc-accuracy-audit/SKILL.md)** — Cross-references CLI documentation against source code. Finds ghost items (documented but missing), hidden items (exist but undocumented), and detail mismatches. Zero-hallucination verification prevents uncited claims. **v1: CLI tools only. Terraform/OpenAPI deferred to v2.**
 
 - **[doc-quality-audit](skills/doc-quality-audit/SKILL.md)** — Evaluates docs for tone, style, clarity, and plain language compliance. Reports issues with severity ratings and suggestions.
 
@@ -21,27 +28,30 @@ A family of four skills for comprehensive documentation auditing and improvement
 /doc-quality-check  → runs all three in sequence
 ```
 
+## What's Supported (v1)
+
+**CLI Tools:** argparse (Python), Cobra (Go), Click (Python), Bash function dispatch
+**Accuracy Audit:** Auto-detects framework, finds ghost items, hidden items, detail mismatches with zero-hallucination verification
+**Quality Audit:** Works on any documentation (tone, clarity, consistency, completeness, audience, examples)
+
+**Deferred to v2:** Terraform providers, OpenAPI/Swagger specs. See [V1-SCOPE.md](docs/V1-SCOPE.md) for details.
+
 ## Installation
 
+**Option 1: Local development (recommended for testing)**
 ```bash
-# All skills, user scope — available in all sessions (recommended)
-npx skills add tima/doc-quality -g
-
-# All skills, project scope — this project only
-npx skills add tima/doc-quality
-
-# Specific skills only
-npx skills add tima/doc-quality --skill doc-accuracy-audit -g
-```
-
-Local development install:
-```bash
-git clone https://github.com/tima/doc-quality.git ~/projects/doc-quality
-# Symlink each skill individually
+git clone <repo-url> ~/projects/doc-quality
+# Symlink each skill
 ln -sf ~/projects/doc-quality/skills/doc-accuracy-audit ~/.claude/skills/doc-accuracy-audit
 ln -sf ~/projects/doc-quality/skills/doc-quality-audit ~/.claude/skills/doc-quality-audit
 ln -sf ~/projects/doc-quality/skills/doc-quality-revise ~/.claude/skills/doc-quality-revise
 ln -sf ~/projects/doc-quality/skills/doc-quality-check ~/.claude/skills/doc-quality-check
+```
+
+**Option 2: Published registry (when available)**
+```bash
+# Replace REGISTRY_PATH with actual registry location
+npx skills add REGISTRY_PATH/doc-quality -g
 ```
 
 ### Uninstall

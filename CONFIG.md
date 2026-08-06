@@ -44,7 +44,7 @@ grep "^key:" .doc-quality.yml | cut -d: -f2- | xargs
 | incremental.since | YES | YES | - |
 | output.path | YES | YES | YES |
 
-See `.doc-quality.yml.example` for full schema with all supported fields.
+**Full schema example:** See [`.doc-quality.yml.example`](.doc-quality.yml.example) in the repository root for all supported fields, defaults, and usage examples.
 
 ---
 

@@ -1,37 +1,66 @@
-# Optional config for doc-quality-skills
-# Place in project root as .doc-quality.yml
+# Example Configuration File for doc-quality Skills
+# Copy this to .doc-quality.yml in your project root to customize behavior
+# All fields are optional; skills use sensible defaults if not provided
 
-# Override default style guide
-style_guide: path/to/custom-style.md
+# Optional: Path to a custom style guide (beyond embedded baseline)
+# Used by: doc-quality-audit
+style_guide: path/to/custom-style-guide.md
 
-# Rule overrides
+# Rules configuration
+# Used by: doc-quality-audit (quality audit), doc-quality-revise (revisions)
 rules:
-  # Override auto-revision behavior (ignore|warn|error)
-  contractions: ignore
+  # Which rules to skip entirely (by rule ID)
+  skip_rules:
+    - Plain Language #14  # Skip no-contractions rule
+    - Tone #2             # Skip formal voice enforcement
 
-  # Add custom word replacements
+  # Word replacements for auto-revision
+  # Used by: doc-quality-revise
   word_replacements:
     - from: utilise
       to: utilize
     - from: colour
       to: color
+    - from: amongst
+      to: among
+    - from: whilst
+      to: while
 
-  # Disable specific rules
-  skip_rules:
-    - Plain Language #14  # No contractions rule
+  # Contraction handling
+  contractions:
+    expand: false         # true=expand, false=leave as-is
 
-# Severity thresholds
+# Severity thresholds (for quality audit)
+# Used by: doc-quality-audit
 severity_thresholds:
-  critical: fail     # fail|warn|ignore
-  moderate: warn
-  minor: ignore
+  critical: 40           # Sentence length limit for Critical (words)
+  moderate: 26           # Sentence length limit for Moderate (words)
 
-# Incremental mode defaults
+# Incremental mode configuration (for --since flag)
+# Used by: doc-accuracy-audit, doc-quality-audit
 incremental:
-  enabled: false
-  since: HEAD~3      # Git ref for changed files
+  enabled: false         # Set true to default to incremental mode
+  since: HEAD~3          # Default git ref for --since flag
 
 # Output configuration
+# Used by: all skills (for report file paths)
 output:
-  format: markdown   # markdown|json
-  path: reports/     # Output directory (relative to project root)
+  format: markdown       # markdown or json
+  path: .doc-quality-reports/  # Directory for timestamped audit reports
+
+# Accuracy audit configuration
+# Used by: doc-accuracy-audit
+accuracy:
+  # Framework type: auto-detected by default
+  # Provide only to skip detection: argparse|cobra|click|bash-dispatch
+  framework: null
+
+# Quality audit configuration
+# Used by: doc-quality-audit
+quality:
+  # Dimensions to check: core (7) or comprehensive (10)
+  # Leave unset to prompt user each time
+  dimensions: null
+
+  # Target audience level: affects clarity thresholds
+  audience: intermediate  # beginner|intermediate|expert
