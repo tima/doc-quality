@@ -84,6 +84,20 @@
       "prompt": "Audit CLI documentation at docs/ against the source code at /path/to/my-cli-repo. I'm not sure what framework it uses. Please check the docs for discrepancies with the actual code.",
       "expected_output": "The skill should auto-detect the CLI framework without asking (run detect-cli-framework.py on /path/to/my-cli-repo). The detection result should be silent if successful (high or medium confidence). The skill should then run the appropriate patterns for the detected framework. If detection fails (unknown framework), the skill should ask the user to clarify and offer framework options. The audit report should note which framework was detected and which search patterns were used.",
       "files": []
+    },
+    {
+      "id": 13,
+      "type": "verification-traceability",
+      "prompt": "Audit CLI docs and find 3 ghost items and 1 hidden item. Run the verification pass before writing the report.",
+      "expected_output": "The verification pass (check 1: Traceability) must confirm every ghost and hidden finding cites a search result. Ghost findings require: 'Searched: rg \"PATTERN\" dir/ — 0 matches' or equivalent. Any finding without cited evidence must be removed or downgraded to Low Confidence. After verification, the report must show 4 findings (3 ghost, 1 hidden), each with search evidence inline.",
+      "files": []
+    },
+    {
+      "id": 14,
+      "type": "verification-direction-accuracy",
+      "prompt": "Audit docs that claim '--timeout defaults to 30s' but code shows 'Timeout: 60'. Run the verification pass before writing the report.",
+      "expected_output": "The verification pass (check 2: Direction Accuracy) must verify the direction of every mismatch claim. If docs claim one value and code has another, the finding should read: Doc Claim: defaults to 30s | Source of Truth: defaults to 60s. After verification, any inverted claims must be flipped. The report must show the correct direction (docs on left, source on right).",
+      "files": []
     }
   ]
 }

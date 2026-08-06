@@ -450,21 +450,66 @@ If you cannot access documentation or the source of truth:
 
 **[Silent — no output to user. Run before writing any section.]**
 
-Before writing the audit report, perform these 3 verification checks. These prevent hallucination (claims without evidence):
+Before writing the audit report, perform these 6 verification checks. These prevent hallucination (claims without evidence).
 
-1. **Traceability:** Every ghost/hidden/mismatch finding must cite a tool result — a grep/sg match, file path, schema field, or 0-result search count. A finding with no cited evidence must be removed or downgraded to Low Confidence with "Needs manual verification."
+**Execution mode:** If auditing ≤50 items, run all 6 checks. If >50 items, run checks 1, 3, 4 on High Confidence findings only (spot-check mode).
 
-   Example citation: `(searched: rg '\.AddCommand\(' src/ — 0 matches)` or `(inspected: acme/resource_certificate.go line 142 — no Default field)`
+#### 1. Traceability
 
-2. **Direction accuracy:** Re-read evidence for every "Docs say X, source says Y" claim. These invert easily. The source of truth (code/spec) is always the right-hand side of "Source of Truth:". Flip any that are inverted.
+Every ghost/hidden/mismatch finding must cite a tool result — a grep match, rg output, file path, schema field, or 0-result search count. A finding with no cited evidence must be removed or downgraded to Low Confidence with "Needs manual verification."
 
-   Example: If docs claim "required" and code shows `Required: false`, the finding should read:
-   **Doc Claim:** Required field
-   **Source of Truth:** Optional (Required: false in schema)
+Example citations:
+- `(searched: rg '\.AddCommand\(' src/ — 0 matches)` 
+- `(inspected: acme/resource_certificate.go line 142 — no Default field)`
+- `(found: 47 matches for rg 'ArgumentParser' src/ )`
 
-3. **Exclusivity gate:** Any finding using "only", "not in", "missing", "absent", "not found", or "not documented" must cite the search command and its result count inline: `(searched: rg "flag-name" src/ — 0 matches)` or `(searched: sg --lang go -p '$PATTERN' . — 0 matches)`. A 0-result grep IS evidence; gate this check to logical scope-claims, not confirmatory 0-results.
+#### 2. Direction Accuracy
 
-   Example: A ghost finding for `--profile` flag requires: "Searched: rg '\..*profile' src/ — 0 matches across 45 Go files in the cmd/ directory"
+Re-read evidence for every "Docs say X, source says Y" claim. Direction inversion is common. The source of truth (code/spec) is always the right-hand side of "Source of Truth:". Flip any inverted claims.
+
+Example: If docs claim "required" and code shows `Required: false`:
+- **Wrong:** Doc Claim: Required | Source of Truth: Required field (inverted reading)
+- **Correct:** Doc Claim: Required | Source of Truth: Optional (Required: false in schema)
+
+Check every finding with "mismatch" or "differs" in its description.
+
+#### 3. Enumerated Completeness
+
+Tally findings by category (ghost, hidden, mismatch). Cross-check that summary counts match the section item counts exactly. Correct any discrepancy before writing the report.
+
+Example:
+```
+Section Body: Lists 3 ghost items, 2 hidden items, 1 mismatch
+Summary says: 3 ghost, 2 hidden, 1 mismatch ✓
+(If summary says 4 ghost, correct it before output)
+```
+
+#### 4. Exclusivity Gate
+
+Any finding claiming "missing", "absent", "not found", "only", "not in", or "not documented" must cite the search command and its result count inline. A 0-result search IS evidence (not a failure); gate only to prevent "missing" claims without proof.
+
+Required format: `(searched: COMMAND — RESULT_COUNT matches)`
+
+Example citations:
+- `(searched: rg "flag-name" src/ — 0 matches across 45 Go files)`
+- `(searched: sg --lang go -p '$PATTERN' . — 0 matches)`
+- `(searched: grep -r "ResourceName" terraform/ — 0 lines)`
+
+A finding stating "the --profile flag is not documented" MUST show: `(searched: rg '\..*profile' src/ — 0 matches)` or equivalent.
+
+#### 5. Verdict Consistency
+
+Scan the report for any item appearing under more than one verdict (e.g., same flag listed as both Ghost and Hidden). Remove duplicates; assign the verdict supported by the strongest evidence.
+
+Example: If `--debug` appears as both Ghost and Hidden, keep only the one with clearer evidence and remove the duplicate.
+
+#### 6. Named Entity Type
+
+Commands are commands, flags are flags, resources are resources, attributes are attributes, endpoints are endpoints. Check that entity type labels in findings match what was actually found in the source.
+
+Example:
+- If a search found `def advisory_lock()`, it's a function, not a class. Don't label it "class AdvisoryLock."
+- If a search found `registerCommand('acme.deploy')`, it's a command, not a setting. Label accordingly.
 
 ### File naming
 
@@ -659,7 +704,7 @@ If the docs have multiple complex examples, ask the user which one to validate i
 7. **Use domain-appropriate methods** -- Source code for CLI, schema inspection + Go code for Terraform, spec parsing for API.
 8. **Framework auto-detection (CLI/Terraform):** Use `detect-cli-framework.py` to automatically identify which patterns to use. If detection fails or returns "unknown", ask the user to clarify the framework and offer manual options. Detection results guide pattern selection in Step 4.
 9. **Search tool policy (CLI/Terraform):** Use `rg` (ripgrep) or `grep` for source code pattern search. Patterns are optimized for text search, not AST. The "Source Search Tool" and framework-specific sections provide patterns for each detected framework. API audits do not use code search tools.
-10. **Verification pass required** -- Before writing any report section, run the 3 checks in "Verify Before Writing Report": traceability, direction accuracy, exclusivity gate. All findings must cite search evidence inline.
+10. **Verification pass required** -- Before writing any report section, run the 6 checks in "Verify Before Writing Report": traceability, direction accuracy, enumerated completeness, exclusivity gate, verdict consistency, entity type naming. All findings must cite search evidence inline. Spot-check mode (checks 1, 3, 4 only) applies to audits with >50 items.
 11. **No emojis or icons** -- Use plain text verdicts and labels only. No decorative characters in the report or in conversational responses.
 
 ---
