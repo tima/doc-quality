@@ -42,8 +42,8 @@ Optional flags:
 - `--output <filename>` - Override default report filename (default: `{project-name}-accuracy-audit-YYYYMMDD-HHMM-UTC.md`)
 - `--dry-run` - Display report without saving (preview mode)
 - `--since <git-ref>` - Audit only files changed since git ref (incremental mode)
-- `--type <cli|terraform|api>` - Project type (skip type detection prompt)
-- `--source <path-or-url>` - Source of truth: code repo or spec file (skip source prompt)
+- `--type <cli|python-library|vscode-extension>` - Project type (skip type detection prompt). Terraform/OpenAPI support deferred to v2.
+- `--source <path-or-url>` - Source of truth: code repo (skip source prompt)
 - `--upstream <path-or-url>` - Upstream docs location (skip upstream prompt)
 - `--downstream <path-or-url>` - Downstream/enterprise docs (skip downstream prompt)
 
@@ -66,15 +66,15 @@ Stop and ask the user for the following information. Do NOT proceed to the audit
 
 ### Identify the Project Type
 
-First, determine which type of project you are auditing:
+First, determine which type of project you are auditing (v1 support):
 
 - **CLI Tool** -- A command-line tool with commands, subcommands, flags, and arguments
 - **Python Library** -- A Python package with classes, functions, and public API exports
 - **VS Code Extension** -- A TypeScript extension with commands, settings, and contributions
-- **Terraform Provider** -- A Terraform provider with resources, data sources, and schema attributes (v2)
-- **API Documentation** -- An API with an OpenAPI/Swagger specification (v2)
 
-If `--type` flag provided, use that value. Otherwise, if the project type is not clear from the user's request, ask: "What type of project is this -- a CLI tool, a Python library, a VS Code extension, a Terraform provider, or an API with an OpenAPI spec?"
+If `--type` flag provided, use that value. Otherwise, if the project type is not clear from the user's request, ask: "What type of project is this -- a CLI tool, a Python library, or a VS Code extension?"
+
+**Note:** Terraform and OpenAPI auditing are deferred to v2. Users requesting those should see: "Terraform and OpenAPI auditing are planned for v1.2. For now, this skill supports CLI tools, Python libraries, and VS Code extensions."
 
 ### Context Questions by Type
 
@@ -97,16 +97,6 @@ If `--type` flag provided, use that value. Otherwise, if the project type is not
 
 4. **Source Code Repository** -- Link to the repo, or local path if available
 5. **TypeScript Source Path** -- Where is the main extension code? (e.g., src/, extension/), or auto-detect?
-
-**Terraform Providers -- additional questions:**
-
-4. **Source Code Repository** -- Link to the repo, or local path if available
-5. **Schema Access** -- Can you run `terraform providers schema -json` with the provider binary, or should I inspect Go source code, or both?
-
-**API Documentation -- additional questions:**
-
-4. **Spec File** -- Path to the OpenAPI/Swagger specification file (YAML or JSON)
-5. **Spec Format** -- OpenAPI 3.x or Swagger 2.0?
 
 Ask these in a conversational way. If the user provides some but not all context, ask for the missing pieces.
 

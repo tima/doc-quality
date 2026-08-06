@@ -77,3 +77,15 @@ All skills follow this policy:
 - Label subjective findings as "Suggestion" rather than "Issue".
 - If doc type or intent is unclear, ask for clarification rather than guessing.
 - Better to skip a revision than apply the wrong change.
+
+---
+
+## Confidence Levels
+
+All audit findings are annotated with confidence based on verification method:
+
+- **High Confidence** — Direct source verification, unambiguous evidence (e.g., code search confirms absence, schema field exists, example runs without error)
+- **Medium Confidence** — Indirect evidence, minor ambiguity (e.g., comment-stated behavior vs actual code, partial match)
+- **Low Confidence** — Uncertain, requires manual review (e.g., parse failure, documentation ambiguity, tool unavailable)
+
+Every finding must cite its evidence source and state its confidence level before output.
