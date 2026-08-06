@@ -81,29 +81,51 @@ Documentation drifts from code: users hit undocumented features, missing command
 - `sg` (ast-grep) — Structural code search, planned for v1.2 (Terraform/OpenAPI support)
   - See https://ast-grep.github.io/guide/quick-start.html
 
-**Option 1: Local development (recommended for testing)**
+### Via npx skills (Recommended)
+
 ```bash
-git clone <repo-url> ~/projects/doc-quality
-# Symlink each skill
+# All skills, user scope (available in all sessions)
+npx skills add tima/doc-quality -g
+
+# All skills, project scope (this project only)
+npx skills add tima/doc-quality
+
+# Specific skills only
+npx skills add tima/doc-quality --skill doc-accuracy-audit -g
+npx skills add tima/doc-quality --skill doc-quality-audit -g
+npx skills add tima/doc-quality --skill doc-quality-revise -g
+npx skills add tima/doc-quality --skill doc-quality-check -g
+```
+
+### Local Development
+
+```bash
+git clone https://github.com/tima/doc-quality.git ~/projects/doc-quality
 ln -sf ~/projects/doc-quality/skills/doc-accuracy-audit ~/.claude/skills/doc-accuracy-audit
 ln -sf ~/projects/doc-quality/skills/doc-quality-audit ~/.claude/skills/doc-quality-audit
 ln -sf ~/projects/doc-quality/skills/doc-quality-revise ~/.claude/skills/doc-quality-revise
 ln -sf ~/projects/doc-quality/skills/doc-quality-check ~/.claude/skills/doc-quality-check
 ```
 
-**Option 2: Published registry (when available)**
-```bash
-# Replace REGISTRY_PATH with actual registry location
-npx skills add REGISTRY_PATH/doc-quality -g
-```
-
 ### Uninstall
 
+**Registry installed:**
 ```bash
-npx skills remove doc-accuracy-audit           # project scope
-npx skills remove doc-accuracy-audit --global  # user scope
-# (repeat for each skill)
+npx skills remove doc-accuracy-audit --global
+npx skills remove doc-quality-audit --global
+npx skills remove doc-quality-revise --global
+npx skills remove doc-quality-check --global
 ```
+
+**Locally symlinked:**
+```bash
+rm ~/.claude/skills/doc-accuracy-audit
+rm ~/.claude/skills/doc-quality-audit
+rm ~/.claude/skills/doc-quality-revise
+rm ~/.claude/skills/doc-quality-check
+```
+
+See [INSTALL.md](INSTALL.md) for detailed installation, updating, and troubleshooting.
 
 ## License
 
