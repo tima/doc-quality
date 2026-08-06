@@ -1,29 +1,23 @@
-# Archive: Historical Design Documents
+# Archive: Implementation Journals & Obsolete Planning
 
-This directory contains pre-implementation design notes and early planning documents that are **no longer current**. These documents do not reflect the actual implementation and should not be used as a reference for understanding how the skills work.
+This directory contains work-in-progress documentation, phase reports, and obsolete planning materials from earlier development stages.
 
-## What's Here
+**Current work reference:** See `/docs/reference/` for architecture, scope, and verification details.
 
-- `2026-06-15-doc-quality-check-design.md` — Architectural design for the orchestrator skill (June 2026)
-- `2026-06-15-doc-quality-check.md` — Early design notes and considerations
+## Contents
 
-## Why Archived?
+- **PHASE-*.md** — Phase completion reports (v1.0, v1.1, v1.2 development milestones)
+- **PATTERN-DISCOVERY.md** — Pattern discovery research from initial audit framework design
+- **REPO-INVENTORY-FINDINGS.md** — Multi-repo inventory analysis for framework requirements
+- **TEST_RESULTS.md** — Installation and structural validation test results
+- **archive/** (pre-2026-08-06) — Earlier implementation attempts
 
-These documents predate the implementation of:
-- Zero-hallucination verification passes (traceability, direction accuracy, exclusivity gate)
-- CLI framework auto-detection (argparse, Cobra, Bash, Click)
-- V1 scope clarification (CLI tools only; Terraform/OpenAPI deferred to v2)
+## Why This Matters
 
-The final implementation diverged significantly from these early designs as actual requirements became clearer.
+These documents capture the reasoning, decisions, and validation work behind the current design. They're useful for understanding why certain patterns were chosen or rejected, but are not needed for using or maintaining the skills.
 
-## Current Documentation
-
-For accurate, up-to-date documentation, see:
-- **SKILL.md files** — Authoritative skill specifications
-- **V1-SCOPE.md** — What v1 actually supports and why
-- **PATTERN-DISCOVERY.md** — Code patterns used for CLI auditing
-- **REPO-INVENTORY-FINDINGS.md** — Framework analysis across real repositories
-
-## Future Considerations
-
-These documents may be deleted entirely in a future release once v2 design is final (to avoid confusion). For now, they're preserved in this subdirectory to reduce clutter while maintaining git history.
+**To navigate the project:**
+1. Start with [../reference/ARCHITECTURE.md](../reference/ARCHITECTURE.md) for design
+2. See [../reference/V1-SCOPE.md](../reference/V1-SCOPE.md) for what's supported
+3. Check [RELEASE-NOTES-v1.2.md](../../RELEASE-NOTES-v1.2.md) at project root for changes
+4. Browse this archive if researching decision history
