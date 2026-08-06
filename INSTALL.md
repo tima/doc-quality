@@ -90,4 +90,4 @@ Should prompt for project path and documentation location, then run the skill.
 
 ---
 
-**Note:** These skills work with any AI tool supporting Claude Code (Claude Code CLI, desktop app, web app, IDE extensions). Installation method (npx skills vs symlink) doesn't affect compatibility.
+**Note:** These skills work with any AI tool supporting agent skills. Installation method (npx skills vs symlink) doesn't affect compatibility.

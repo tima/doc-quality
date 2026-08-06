@@ -61,6 +61,10 @@ Documentation drifts from code: users hit undocumented features, missing command
 - All documentation types: libraries, extensions, CLIs, guides, API documentation
 - 10 dimensions: tone, clarity, structure, consistency, completeness, audience, examples, formatting, SEO, plain language
 
+**Tool Compatibility:**
+- Works with any AI tool supporting agent skills
+- No Claude-specific dependencies
+
 **Deferred to v2:**
 - Terraform providers, OpenAPI/Swagger specs
 - See [V1-SCOPE.md](docs/V1-SCOPE.md) for detailed scope
