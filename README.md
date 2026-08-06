@@ -67,7 +67,11 @@ Documentation drifts from code: users hit undocumented features, missing command
 
 **Deferred to v2:**
 - Terraform providers, OpenAPI/Swagger specs
-- See [V1-SCOPE.md](docs/V1-SCOPE.md) for detailed scope
+- See [docs/reference/V1-SCOPE.md](docs/reference/V1-SCOPE.md) for detailed scope
+
+**Future exploration:**
+- Ansible playbooks, roles, execution environments, collections
+- See [docs/EXPLORATION-ANSIBLE-AUDITING.md](docs/EXPLORATION-ANSIBLE-AUDITING.md) for research and patterns
 
 ## Installation
 

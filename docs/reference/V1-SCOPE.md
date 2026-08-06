@@ -44,6 +44,9 @@
 - TypeScript CLI frameworks (Commander.js)
 - API documentation (GraphQL, REST without OpenAPI)
 
+**Future exploration:**
+- Ansible playbooks, roles, execution environments, collections — See [../EXPLORATION-ANSIBLE-AUDITING.md](../EXPLORATION-ANSIBLE-AUDITING.md) for research on feasibility and patterns
+
 ## Why These Three in v1?
 
 1. **Clear source of truth:** Code is definitive; docs are secondary (unlike specs/schemas)
