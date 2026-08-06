@@ -680,3 +680,35 @@ If the docs have multiple complex examples, ask the user which one to validate i
 **You:** Perform Tasks 1-4 with strict adherence, generate the report with metadata footer (AI provider, model, timestamp), save to timestamped filename, and share key findings with the user.
 
 ---
+
+## Limitations (v1.1)
+
+### Polyglot Project Detection
+
+**Issue:** Projects with multiple languages may be misclassified if a secondary language has stronger detection markers than the primary language.
+
+**Example:** A TypeScript/Node.js project (primary) with Python build scripts (secondary) may be detected as a "Python library" if `setup.py` and class definitions are present.
+
+**Impact:** Audit findings apply to the detected type. If type is wrong, findings may not match the project's actual structure.
+
+**Workaround:** Manually verify project type before running audit. If project type seems wrong, re-run with `--type <correct-type>` flag to override auto-detection.
+
+**Status:** Documented for v1.1. Fix planned for v1.2 (root manifest precedence + multi-factor evidence weighting).
+
+### Semantic Type Detection
+
+**Issue:** grep patterns cannot distinguish between class and function definitions across all languages.
+
+**Impact:** If documentation claims a class but code implements a function (or vice versa), the audit reports a type mismatch but cannot auto-correct it.
+
+**Mitigation:** User review required for type mismatches. AST-based detection planned for v1.2.
+
+### Private vs Public Symbols
+
+**Issue:** Patterns find all symbol definitions (public + private). Library audit cannot filter private symbols without `__all__` or naming conventions.
+
+**Impact:** "Hidden items" list may include intentionally private classes/functions.
+
+**Mitigation:** Check `__all__` exports or ignore symbols starting with `_` (underscore).
+
+---
