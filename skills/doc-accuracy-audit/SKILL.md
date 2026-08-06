@@ -131,14 +131,14 @@ Perform the requested tasks.
 Check for ast-grep availability:
 
 ```bash
-command -v sg >/dev/null 2>&1 && echo "sg available" || echo "sg not found"
+command -v ast-grep >/dev/null 2>&1 && echo "ast-grep available" || echo "ast-grep not found"
 ```
 
-- If available: use `sg` for source code searches throughout this step.
-- If not found: "Note: `sg` (ast-grep) is not installed. Source searches will use `rg`/`grep` instead. Installing `sg` gives syntax-aware structural search — results contain only real code constructs, not matches inside strings or comments, which reduces context noise. See https://ast-grep.github.io/guide/quick-start.html"
+- If available: use `ast-grep` for source code searches throughout this step.
+- If not found: "Note: `ast-grep` is not installed. Source searches will use `rg`/`grep` instead. Installing `ast-grep` gives syntax-aware structural search — results contain only real code constructs, not matches inside strings or comments, which reduces context noise. See https://ast-grep.github.io/guide/quick-start.html"
 - If found: proceed silently.
 
-**API audits:** Skip this check. API specs (YAML/JSON) are not supported by sg; use standard parsing tools (jq, yq, grep) as described in the API audit section.
+**API audits:** Skip this check. API specs (YAML/JSON) are not supported by ast-grep; use standard parsing tools (jq, yq, grep) as described in the API audit section.
 
 Follow these **Strict Adherence Rules** religiously:
 
@@ -185,12 +185,13 @@ Follow the subsection that matches the identified project type.
 Show progress: "Auditing commands... [Task 1/4]"
 Read source code for command registration patterns (Cobra, argparse, Click, or framework-specific). List all registered commands and subcommands. Compare against the documented command list. Flag ghost commands (documented but not in code) and hidden commands (in code but not documented).
 
-**For Cobra (Go) CLIs, if sg is available:**
+**For Cobra (Go) CLIs, if ast-grep available:**
 ```bash
-sg --lang go -p '$PARENT.AddCommand($$$)' .
-sg --lang go -p '&cobra.Command{$$$}' .
+ast-grep scan --inline-rules "id: addcmd
+language: go
+rule: {kind: call_expression, regex: AddCommand}" .
 ```
-**Fallback (if sg not available):**
+**Fallback (if ast-grep not available):**
 ```bash
 rg '\.AddCommand\(' --type go
 rg 'cobra\.Command{' --type go
@@ -200,14 +201,13 @@ rg 'cobra\.Command{' --type go
 Show progress: "Auditing flags... [Task 2/4]"
 For each command in scope, extract flags and arguments from source code: names, aliases, types, default values, constraints, required/optional status. Compare against documented flags. Flag naming mismatches, missing defaults, incorrect types, and undocumented constraints.
 
-**For Cobra (Go) CLIs, if sg is available:**
+**For Cobra (Go) CLIs, if ast-grep available:**
 ```bash
-sg --lang go -p '$FLAGS.StringVar($$$)' .
-sg --lang go -p '$FLAGS.BoolVar($$$)' .
-sg --lang go -p '$FLAGS.IntVar($$$)' .
-sg --lang go -p '$FLAGS.StringP($$$)' .
+ast-grep scan --inline-rules "id: flags
+language: go
+rule: {kind: call_expression, regex: '(StringVar|BoolVar|IntVar|StringP|BoolVarP|IntVarP)'}" .
 ```
-**Fallback (if sg not available):**
+**Fallback (if ast-grep not available):**
 ```bash
 rg '\.Flags\(\)\.' --type go
 rg '\.PersistentFlags\(\)\.' --type go
@@ -227,11 +227,13 @@ Pick the most representative command (or let the user choose). Trace its executi
 Show progress: "Auditing resources... [Task 1/4]"
 Identify all resources and data sources registered in the provider code. Compare against the documented resource list. Flag ghost resources (documented but not registered) and hidden resources (registered but not documented).
 
-**For Go-based providers, if sg is available:**
+**For Go-based providers, if ast-grep available:**
 ```bash
-sg --lang go -p '"$NAME": $FUNC()' .
+ast-grep scan --inline-rules "id: registry
+language: go
+rule: {kind: call_expression, regex: 'Resources|DataSources'}" .
 ```
-**Fallback (if sg not available):**
+**Fallback (if ast-grep not available):**
 ```bash
 rg '"[A-Za-z_]+":' --type go | grep -E 'resource|datasource'
 ```
@@ -239,17 +241,17 @@ rg '"[A-Za-z_]+":' --type go | grep -E 'resource|datasource'
 **Task 2 -- Schema Attribute Audit:**
 For each resource or data source in scope, extract the schema: attribute names, types, required/optional/computed status, default values, validation rules, deprecation notices. Compare against documented attributes. Flag mismatches in any of these fields.
 
-**For Go-based providers, if sg is available:**
+**For Go-based providers, if ast-grep available:**
 ```bash
-sg --lang go -p '"$ATTR": {$$$}' .
-sg --lang go -p 'Default: $VAL' .
-sg --lang go -p 'Required: $VAL' .
-sg --lang go -p 'ValidateFunc: $$$' .
+ast-grep scan --inline-rules "id: schema
+language: go
+rule: {kind: call_expression, regex: '(Default|Required|Optional|Computed|ValidateFunc)'}" .
 ```
-**Fallback (if sg not available):**
+**Fallback (if ast-grep not available):**
 ```bash
 rg '"[a-z_]+": {' --type go
 rg 'Default:' --type go
+rg 'Required:' --type go
 ```
 
 **Task 3 -- Upstream vs Downstream Alignment:**
@@ -548,7 +550,7 @@ If the docs have multiple complex examples, ask the user which one to validate i
 5. **Include metadata footer** -- Always end the report with AI provider, model name, and timestamp.
 6. **Deliver the report as Markdown** -- Save it, then show the user the path and key findings.
 7. **Use domain-appropriate methods** -- Source code for CLI, schema inspection + Go code for Terraform, spec parsing for API.
-8. **Search tool policy (CLI/Terraform)** -- Use `sg` (ast-grep) for all source code searches. Infer `--lang go` for both Cobra CLI and Terraform Go sources. Fall back to `rg`/`grep` only when sg is unavailable or cannot express the pattern; note in the report which tool was used. API audits do not use sg.
+8. **Search tool policy (CLI/Terraform)** -- Use `ast-grep` for all source code searches on Go-based CLI and Terraform providers. Use `ast-grep scan --inline-rules` with `kind: call_expression` + `regex` patterns for structural matching. Fall back to `rg`/`grep` only when ast-grep is unavailable; note in the report which tool was used. API audits do not use ast-grep.
 9. **No emojis or icons** -- Use plain text verdicts and labels only. No decorative characters in the report or in conversational responses.
 
 ---

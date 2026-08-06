@@ -106,14 +106,14 @@ If doc set has <10 files, skip progress (fast enough).
 Check for ast-grep availability:
 
 ```bash
-command -v sg >/dev/null 2>&1 && echo "sg available" || echo "sg not found"
+command -v ast-grep >/dev/null 2>&1 && echo "ast-grep available" || echo "ast-grep not found"
 ```
 
-- If available: use `sg` for structural analysis of code examples within docs (when docs contain code in sg-supported languages: Python, Go, JS, Rust, etc.).
-- If not found: "Note: `sg` (ast-grep) is not installed. Code example searches will use `rg`/`grep`. See https://ast-grep.github.io/guide/quick-start.html"
+- If available: use `ast-grep` for structural analysis of code examples within docs (when docs contain code in ast-grep-supported languages: Python, Go, JS, Rust, etc.).
+- If not found: "Note: `ast-grep` is not installed. Code example searches will use `rg`/`grep`. See https://ast-grep.github.io/guide/quick-start.html"
 - If found: proceed silently.
 
-**Note:** sg does not support Markdown. For code block language tag checks (Visual Formatting #10), use: `rg '^\`\`\`$' <path>` — this finds fenced code blocks missing a language tag.
+**Note:** ast-grep does not support Markdown. For code block language tag checks (Visual Formatting #10), use: `rg '^\`\`\`$' <path>` — this finds fenced code blocks missing a language tag.
 
 Follow these **Strict Adherence Rules**:
 
