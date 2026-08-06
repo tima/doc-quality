@@ -26,24 +26,69 @@ def run_cmd(cmd, cwd=None):
 
 
 def detect_project_type(code_path):
-    """Determine if project is CLI, Python library, TypeScript extension, or generic code."""
-    # Check for TypeScript/VS Code extension markers FIRST
+    """
+    Determine project type using root manifest priority (polyglot fix for v1.2).
+
+    Priority order:
+    1. package.json at root -> TypeScript/JavaScript (primary language)
+    2. go.mod at root -> Go (primary language)
+    3. Cargo.toml at root -> Rust (primary language)
+    4. setup.py/pyproject.toml at root -> Python (primary language)
+    5. CLI framework signatures (argparse, Cobra, Click, Bash)
+    6. Python library structure (__init__.py, classes, functions)
+
+    This prevents polyglot projects (e.g., TypeScript with Python build scripts)
+    from being misclassified based on secondary language markers.
+    """
+
+    # TIER 1: Check root manifests (these define primary project type)
+    # package.json at root with substantive content (not just devDependencies) indicates TS/JS primary
     if os.path.isfile(os.path.join(code_path, "package.json")):
         try:
             with open(os.path.join(code_path, "package.json")) as f:
                 pkg_content = f.read()
                 if '"contributes"' in pkg_content or '"activationEvents"' in pkg_content:
                     return "vscode-extension"
-                if '"main"' in pkg_content or '"bin"' in pkg_content:
-                    # Check if it looks like a CLI or library
-                    if "cli" in pkg_content.lower() or "command" in pkg_content.lower():
+                # Check for substantive Node.js project markers
+                # (not just build tools in devDependencies)
+                has_main_entry = '"main"' in pkg_content or '"bin"' in pkg_content
+                has_scripts = '"scripts"' in pkg_content
+                has_deps = '"dependencies"' in pkg_content
+                is_cli_indicator = "cli" in pkg_content.lower() or "command" in pkg_content.lower()
+
+                # If it has actual project content (main, scripts, dependencies), it's TS/JS primary
+                if has_main_entry or has_deps or (has_scripts and not "devDependencies" in pkg_content[:pkg_content.find('"scripts"')]):
+                    if is_cli_indicator:
                         return "cli"
                     return "typescript-library"
+                # If package.json only has devDependencies (build tool), skip to next tier
         except:
             pass
 
-    # Check for CLI framework signatures BEFORE library checks
-    # This ensures ansible-creator (which has setup.py but is a CLI) gets detected as CLI
+    # go.mod at root indicates Go primary
+    if os.path.isfile(os.path.join(code_path, "go.mod")):
+        return "cli"  # Go projects are typically CLI tools
+
+    # Cargo.toml at root indicates Rust primary
+    if os.path.isfile(os.path.join(code_path, "Cargo.toml")):
+        return "cli"  # Rust projects typically CLI
+
+    # setup.py/pyproject.toml at root indicates Python primary
+    # (but check for CLI frameworks first within Python)
+    if os.path.isfile(os.path.join(code_path, "setup.py")) or \
+       os.path.isfile(os.path.join(code_path, "pyproject.toml")) or \
+       os.path.isfile(os.path.join(code_path, "setup.cfg")):
+        # Could be CLI (argparse/Click) or library; check framework signatures
+        cli_count = 0
+        arg_matches = run_cmd(f"grep -r 'ArgumentParser\\|@click\\.' --include='*.py' . 2>/dev/null | wc -l", code_path)
+        if arg_matches and arg_matches[0].isdigit():
+            cli_count += int(arg_matches[0])
+
+        if cli_count > 0:
+            return "cli"  # Python CLI
+        return "python-library"  # Python library (default for setup.py)
+
+    # TIER 2: Check for CLI framework signatures (no root manifest found)
     cli_count = 0
     # argparse/Click
     arg_matches = run_cmd(f"grep -r 'ArgumentParser\\|@click\\.' --include='*.py' . 2>/dev/null | wc -l", code_path)
@@ -61,14 +106,7 @@ def detect_project_type(code_path):
     if cli_count > 0:
         return "cli"  # Found CLI framework markers
 
-    # Now check for Python library markers (setup.py, pyproject.toml, __init__.py)
-    if os.path.isfile(os.path.join(code_path, "setup.py")) or \
-       os.path.isfile(os.path.join(code_path, "pyproject.toml")) or \
-       os.path.isfile(os.path.join(code_path, "setup.cfg")):
-        # If no CLI markers found, treat as library
-        return "python-library"
-
-    # Check for __init__.py (indicator of Python package/library)
+    # TIER 3: Check for Python library structure (__init__.py, classes, functions)
     init_count = len(run_cmd(f"find . -name '__init__.py' -type f 2>/dev/null", code_path))
     if init_count > 0:
         return "python-library"
@@ -304,6 +342,19 @@ def detect_code_structure(code_path):
             "commands_found": ext_info["commands_found"],
             "patterns": patterns,
             "message": f"Detected VS Code extension with {ext_info['commands_found']} commands ({ext_info['confidence']} confidence)"
+        }
+
+    elif project_type == "typescript-library":
+        # TypeScript/JavaScript library or application (secondary to CLI/extension detection)
+        ts_files = run_cmd(f"find . -name '*.ts' -not -path './node_modules/*' -type f 2>/dev/null | wc -l", code_path)
+        ts_count = int(ts_files[0]) if ts_files and ts_files[0].isdigit() else 0
+        confidence = "high" if ts_count > 10 else "medium" if ts_count > 0 else "low"
+        return {
+            "type": "typescript-library",
+            "framework": "typescript-library",
+            "confidence": confidence,
+            "typescript_files": ts_count,
+            "message": f"Detected TypeScript/JavaScript library/application with {ts_count} TypeScript files ({confidence} confidence)"
         }
 
     else:
