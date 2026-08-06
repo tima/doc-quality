@@ -229,10 +229,10 @@ See `test-scenarios.md` for:
 
 ## Migration Path to v2
 
-When v2 adds Terraform and OpenAPI support:
+When v2 adds schema-based auditing (IaC, APIs, configuration):
 
-1. New detection logic for Terraform schema patterns + OpenAPI spec parsing
-2. New pattern sets for Terraform resources/attributes and API endpoints/parameters
+1. New detection logic for schema patterns and spec parsing
+2. New pattern sets for schema resources/attributes and endpoints/parameters
 3. Backward compatibility: CLI, library, extension audits unchanged
 4. All skills remain CLI/library/extension compatible in v2
 
@@ -264,10 +264,9 @@ When v2 adds Terraform and OpenAPI support:
 - Add configuration schema auditing (pyproject.toml, setup.cfg, ansible.cfg)
 
 ### v2
-- Terraform provider schema parsing
-- OpenAPI/Swagger spec parsing
-- GraphQL schema parsing
-- Protocol buffer schema parsing
+- IaC provider schema parsing (Terraform, CloudFormation, etc.)
+- API spec parsing (OpenAPI/Swagger, GraphQL, gRPC)
+- Configuration schema parsing (Kubernetes, Helm, etc.)
 
 ### v3+
 - Machine learning for semantic correctness (behavior matching)

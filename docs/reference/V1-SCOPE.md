@@ -38,11 +38,9 @@
 ## What v1 Does NOT Cover
 
 **Deferred to v2:**
-- Terraform provider schemas
-- OpenAPI/Swagger specifications
-- Configuration file schemas (ansible.cfg, etc.)
+- Schema-based auditing: Infrastructure-as-code (IaC) providers, APIs (OpenAPI/Swagger/GraphQL), configuration specs
 - TypeScript CLI frameworks (Commander.js)
-- API documentation (GraphQL, REST without OpenAPI)
+- Additional CLI frameworks beyond v1 scope
 
 **Future exploration:**
 - Ansible playbooks, roles, execution environments, collections — See [../EXPLORATION-ANSIBLE-AUDITING.md](../EXPLORATION-ANSIBLE-AUDITING.md) for research on feasibility and patterns
@@ -95,15 +93,9 @@
 
 ### Not Yet Supported (v2)
 
-### ✗ Does NOT work: AWS Provider (v2)
-- Source: terraform-provider-aws (Go schemas)
-- Docs: Terraform Registry
-- Audit: Would require schema parsing (deferred to v2)
-
-### ✗ Does NOT work: OpenAPI Pet Store (v2)
-- Source: OpenAPI 3.0 YAML spec
-- Docs: Auto-generated API docs
-- Audit: Would require spec parsing (deferred to v2)
+### ✗ Does NOT work: Schema-based Auditing (v2)
+- Examples: IaC providers, API specs, configuration schemas
+- Issue: Requires schema parsing + semantic validation (deferred to v2)
 
 ## Using the Skills
 
@@ -181,10 +173,10 @@ All features tested on real repositories:
 
 ## Migration to v2
 
-When v2 adds Terraform and OpenAPI support:
+When v2 adds schema-based auditing (IaC, APIs, etc.):
 
 1. No changes to CLI audit behavior (backward compatible)
-2. New auto-detection for Terraform providers and OpenAPI specs
+2. New auto-detection for schema-based project types
 3. New pattern sets and verification logic for schemas
 4. Existing CLI skills remain unchanged
 

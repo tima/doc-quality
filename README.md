@@ -29,7 +29,7 @@ Documentation drifts from code: users hit undocumented features, missing command
 
 ## Skills
 
-- **[doc-accuracy-audit](skills/doc-accuracy-audit/SKILL.md)** — Cross-references CLI documentation against source code. Finds ghost items (documented but missing), hidden items (exist but undocumented), and detail mismatches. Zero-hallucination verification prevents uncited claims. **v1: CLI tools only. Terraform/OpenAPI deferred to v2.**
+- **[doc-accuracy-audit](skills/doc-accuracy-audit/SKILL.md)** — Cross-references CLI documentation against source code. Finds ghost items (documented but missing), hidden items (exist but undocumented), and detail mismatches. Zero-hallucination verification prevents uncited claims. **v1: CLI tools only. Schema-based auditing (IaC, APIs) deferred to v2.**
 
 - **[doc-quality-audit](skills/doc-quality-audit/SKILL.md)** — Evaluates docs for tone, style, clarity, and plain language compliance. Reports issues with severity ratings and suggestions.
 
@@ -66,7 +66,7 @@ Documentation drifts from code: users hit undocumented features, missing command
 - Tool-agnostic (no vendor lock-in)
 
 **Deferred to v2:**
-- Terraform providers, OpenAPI/Swagger specs
+- Schema-based auditing: IaC (infrastructure-as-code), APIs, configuration specs
 - See [docs/reference/V1-SCOPE.md](docs/reference/V1-SCOPE.md) for detailed scope
 
 **Future exploration:**
@@ -86,7 +86,7 @@ Documentation drifts from code: users hit undocumented features, missing command
 - `python3` — For project type detection and Python library auditing
 
 **Optional:**
-- `sg` (ast-grep) — Structural code search, planned for v1.2 (Terraform/OpenAPI support)
+- `sg` (ast-grep) — Structural code search, planned for v2 (schema-based auditing)
   - See https://ast-grep.github.io/guide/quick-start.html
 
 ### Via npx skills (Recommended)

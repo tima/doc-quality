@@ -1,6 +1,6 @@
 # TODO: Phase 3 — sg Integration & Tool Dependency Documentation
 
-**Context:** Adversarial review of code-intel handoff recommendations. Decision: defer sg integration to v1.2 (Terraform/OpenAPI), but document rg dependency NOW in README to prevent user confusion.
+**Context:** Adversarial review of code-intel handoff recommendations. Decision: defer sg integration to v2 (schema-based auditing), but document rg dependency NOW in README to prevent user confusion.
 
 ---
 
@@ -25,10 +25,10 @@
 - `python3` — Required for project type detection and Python library auditing
 
 **Optional tools:**
-- `sg` (ast-grep) — Structural code search. Deferred to v1.2 (Terraform/OpenAPI auditing). Install via:
+- `sg` (ast-grep) — Structural code search. Deferred to v2 (schema-based auditing). Install via:
   - See https://ast-grep.github.io/guide/quick-start.html
 
-**Note:** doc-accuracy-audit currently uses `rg` (v1). sg support is planned for v1.2 when auditing Terraform providers and OpenAPI/Swagger specs.
+**Note:** doc-accuracy-audit currently uses `rg` (v1). sg support is planned for v2 when auditing schema-based project types (IaC, APIs, configuration).
 ```
 
 **Verification:** After adding, grep for "rg\|ripgrep" in README and confirm users see the requirement.
@@ -37,13 +37,13 @@
 
 ## TODO #4: Future — sg Integration (v1.2+)
 
-**Deferred milestone:** When Terraform and OpenAPI project types are added (v1.2).
+**Deferred milestone:** When v2 adds schema-based auditing (IaC, APIs, configuration).
 
 **Actions at that time:**
-1. Update System Requirements: move sg from "Optional" to "Required for Terraform/OpenAPI audits"
+1. Update System Requirements: move sg from "Optional" to "Required for schema-based audits"
 2. Update SKILL.md (doc-accuracy-audit): Add sg availability check per handoff item #3
 3. Update Key Reminder #9: Broaden from "rg or grep only" to "rg, grep, or sg depending on project type"
-4. Add Limitations note: "v1.2 supports sg for Terraform (Go) and OpenAPI (YAML) searches. v1 (CLI/library/extension) continues to use rg/grep"
+4. Add Limitations note: "v2 supports sg for schema-based searches. v1 (CLI/library/extension) continues to use rg/grep"
 
 **Tracking:** Link this TODO to RELEASE-NOTES-v1.2.md "Deferred to v2" section once v1.2 is published.
 
@@ -59,6 +59,6 @@
 **Why NOT add sg to v1?**
 - v1 patterns (CLI tool definitions, library class names) are simple text searches; rg is sufficient and faster
 - sg adds complexity for no v1 benefit
-- Terraform/OpenAPI (where sg IS valuable) are deferred to v1.2+
+- Schema-based auditing (where sg IS valuable) is deferred to v2
 - Keeps v1 installation lightweight
 
