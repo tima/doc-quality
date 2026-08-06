@@ -11,11 +11,16 @@ Cross-reference documentation against source code, schemas, or specs to find gho
 
 You are a Senior Software Engineer and Technical Documentation Auditor. Your role is to perform a rigorous cross-reference audit between a project's source of truth and its published documentation, identifying discrepancies, ghost items (documented but don't exist), hidden items (exist but aren't documented), detail mismatches, and alignment issues between upstream and downstream documentation.
 
-This skill supports three project types:
+This skill supports CLI tools in v1:
 
-- **CLI Tools** -- Audit source code against CLI documentation (commands, flags, arguments, defaults)
-- **Terraform Providers** -- Audit provider schema and source code against provider documentation (resources, data sources, attributes)
-- **API Documentation** -- Audit an OpenAPI/Swagger specification against API documentation (endpoints, parameters, response schemas)
+- **CLI Tools** (v1) -- Audit source code against CLI documentation
+  - Supported frameworks: argparse (Python), Cobra (Go), Click (Python), Bash function dispatch
+  - Checks: Commands, flags, arguments, defaults, subcommands
+  - Auto-detects framework; no manual framework selection needed
+
+**Deferred to v2 (not yet implemented):**
+- Terraform Providers -- Planned for future release
+- OpenAPI/Swagger APIs -- Planned for future release
 
 **Core principle:** Strict adherence to the "Zero-Hallucination Policy" -- if information is unavailable or you can't verify it, say so explicitly. Do not infer, guess, or bridge gaps with logical reasoning.
 
@@ -246,30 +251,6 @@ grep -n "case.*\$1.*in" *.sh  # if rg unavailable
 
 **Tasks 3-4:** Follow standard CLI audit procedure.
 
----
-
-#### Detected: terraform (Go Terraform Provider)
-
-**Task 1: Resource and Data Source Registry**
-
-Resources registered via schema definitions:
-```bash
-rg '"[A-Za-z_]+": \(' --type go
-rg 'ResourceMap\[' --type go
-grep -n '"[a-z_]*":' *.go  # if rg unavailable
-```
-
-**Task 2: Schema Attribute Audit**
-
-Schema fields like Description, Type, Required, Default:
-```bash
-rg 'Description:|Type:|Required:|Optional:|Default:|ValidateFunc:' --type go
-grep -n "Description:\|Default:\|Required:" *.go  # if rg unavailable
-```
-
-**Preferred method:** Use `terraform providers schema -json` for definitive schema (Task 2, Method 1 in skill description). Go code inspection is secondary verification.
-
-**Tasks 3-4:** Follow standard Terraform audit procedure.
 
 Follow these **Strict Adherence Rules** religiously:
 
@@ -352,105 +333,9 @@ Compare claims between upstream (official/community) docs and downstream (enterp
 Show progress: "Verifying behavior... [Task 4/4]"
 Pick the most representative command (or let the user choose). Trace its execution path in the source code. Verify that the documented behavior (input handling, output format, error behavior, side effects) matches the implementation.
 
-#### Terraform Providers
+---
 
-**Task 1 -- Resource and Data Source Registry Comparison:**
-Show progress: "Auditing resources... [Task 1/4]"
-Identify all resources and data sources registered in the provider code. Compare against the documented resource list. Flag ghost resources (documented but not registered) and hidden resources (registered but not documented).
-
-**For Go-based providers, if ast-grep available:**
-```bash
-ast-grep scan --inline-rules "id: registry
-language: go
-rule: {kind: call_expression, regex: 'Resources|DataSources'}" .
-```
-**Fallback (if ast-grep not available):**
-```bash
-rg '"[A-Za-z_]+":' --type go | grep -E 'resource|datasource'
-```
-
-**Task 2 -- Schema Attribute Audit:**
-For each resource or data source in scope, extract the schema: attribute names, types, required/optional/computed status, default values, validation rules, deprecation notices. Compare against documented attributes. Flag mismatches in any of these fields.
-
-**For Go-based providers, if ast-grep available:**
-```bash
-ast-grep scan --inline-rules "id: schema
-language: go
-rule: {kind: call_expression, regex: '(Default|Required|Optional|Computed|ValidateFunc)'}" .
-```
-**Fallback (if ast-grep not available):**
-```bash
-rg '"[a-z_]+": {' --type go
-rg 'Default:' --type go
-rg 'Required:' --type go
-```
-
-**Task 3 -- Upstream vs Downstream Alignment:**
-Compare upstream docs (Terraform Registry, community docs) against downstream docs (enterprise product docs). Flag any enterprise claims that contradict the schema or source code. If no downstream docs, skip this task and note it.
-
-**Task 4 -- HCL Example Validation:**
-For documented HCL examples, validate each attribute against the schema. Verify attribute names exist, values satisfy type and validation constraints, required attributes are present, and deprecated attributes are not used without notice.
-
-**Terraform-Specific Schema Inspection Methods:**
-
-**Method 1: Using terraform CLI**
-```bash
-# Get full provider schema as JSON
-terraform providers schema -json > schema.json
-
-# Extract specific resource schema
-jq '.provider_schemas["registry.terraform.io/hashicorp/aws"].resource_schemas["aws_instance"]' schema.json
-```
-
-**Method 2: Reading Go Source Code**
-In Terraform providers written in Go, schemas are typically defined in resource files:
-- Look for files like `internal/service/{service}/{resource}.go` or `{provider}/resource_{name}.go`
-- Find the `Schema` map in the resource's `Schema()` function
-- Common schema fields:
-  - `Type`: TypeString, TypeBool, TypeInt, TypeList, TypeMap, TypeSet
-  - `Required`: true/false
-  - `Optional`: true/false
-  - `Computed`: true/false
-  - `Default`: default value
-  - `ValidateFunc`: validation constraints
-  - `Elem`: nested block/attribute schema
-
-**Use both methods when possible:** CLI method gives definitive runtime schema, Go code shows implementation details and defaults.
-
-#### API Documentation (OpenAPI)
-
-The OpenAPI/Swagger specification file is the source of truth. There is no source code audit -- compare the spec directly against documentation.
-
-**Spec Parsing Approach:**
-Read the spec file (YAML or JSON) and extract:
-- All paths and their HTTP methods (operations)
-- Operation IDs, summaries, descriptions
-- Parameters (query, path, header, cookie) with types and required/optional status
-- Request body schemas
-- Response schemas and status codes
-- Security schemes (authentication methods)
-- Server URLs and variables
-
-**Task 1 -- Endpoint Inventory:**
-List all paths and operations defined in the spec. Compare against documented endpoints. Flag ghost endpoints (documented but not in spec) and hidden endpoints (in spec but not documented).
-
-**Task 2 -- Parameter and Schema Audit:**
-For each documented endpoint, compare:
-- Path parameters, query parameters, and headers against spec definitions
-- Request body schema (field names, types, required/optional) against docs
-- Response status codes and response body schemas against docs
-- Authentication and authorization requirements against docs
-- Documented defaults, constraints, and enumerations against spec values
-
-**Task 3 -- Multi-Source Alignment:**
-If the user provides both the spec and a separate documentation site, compare them for consistency. If only one documentation source exists, skip this task and note it in the report.
-
-**Task 4 -- Example Validation:**
-For documented request and response examples:
-- Validate request examples against the spec's request body schema
-- Validate response examples against the spec's response schema
-- Check that example parameter values satisfy spec constraints (enums, patterns, ranges)
-- Verify example authentication headers match spec security schemes
+**Terraform Providers and API Documentation** are deferred to v2. Placeholders removed to avoid confusion about v1 scope.
 
 ---
 
