@@ -77,6 +77,13 @@
       "prompt": "Audit a Cobra CLI tool's flag documentation. Source is a local Go repo at /tmp/cobra-cli. I have sg (ast-grep) installed. Check if the flags in docs match what's registered in code.",
       "expected_output": "When sg is available, the skill should use sg --lang go patterns for flag detection (StringVar, BoolVar, etc.) rather than plain grep. The audit process or report should reference sg commands being used for structural search. If sg is not available, the skill should mention ast-grep is not installed and provide the encouraging install nudge. The verification pass should confirm all findings cite sg (or rg fallback) results with match counts.",
       "files": []
+    },
+    {
+      "id": 12,
+      "type": "cli-auto-detection",
+      "prompt": "Audit CLI documentation at docs/ against the source code at /path/to/my-cli-repo. I'm not sure what framework it uses. Please check the docs for discrepancies with the actual code.",
+      "expected_output": "The skill should auto-detect the CLI framework without asking (run detect-cli-framework.py on /path/to/my-cli-repo). The detection result should be silent if successful (high or medium confidence). The skill should then run the appropriate patterns for the detected framework. If detection fails (unknown framework), the skill should ask the user to clarify and offer framework options. The audit report should note which framework was detected and which search patterns were used.",
+      "files": []
     }
   ]
 }

@@ -124,60 +124,152 @@ Perform the requested tasks.
 
 **If incremental mode active:** Only audit files in `changed_files` list (see [CONFIG.md](../../CONFIG.md#incremental-mode---since)).
 
+### Framework Auto-Detection (CLI & Terraform)
+
+**For CLI and Terraform project types only** (skip for API audits):
+
+Automatically detect which CLI framework or provider pattern is in use. This eliminates manual guessing and selects the right patterns for code analysis.
+
+**Detection process (silent, no user interaction):**
+
+```bash
+# Detect framework from code path
+python3 skills/doc-accuracy-audit/lib/detect-cli-framework.py <code-path>
+```
+
+Returns JSON with:
+- `framework`: Detected framework name (cobra-go, argparse, click, bash-dispatch)
+- `confidence`: high/medium/low based on file count
+- `patterns`: Search patterns to use for this framework
+- `message`: Human-readable result
+
+**If detection succeeds:** Use patterns from returned framework section below.  
+**If detection fails or unknown:** Ask user to clarify framework; offer manual pattern selection.
+
 ### Source Search Tool
 
 **For CLI and Terraform project types only** (skip this section for API audits):
 
-Search for source code patterns using text-based tools. `rg` (ripgrep) is preferred if available; `grep` is the fallback. Use `ast-grep` (AST-based structural matching) for complex syntactic patterns if installed, but text search is typically sufficient and more predictable.
+Search for source code patterns using text-based tools. `rg` (ripgrep) is preferred if available; `grep` is the fallback.
 
 Check tool availability:
 
 ```bash
 command -v rg >/dev/null 2>&1 && echo "rg available" || echo "Using grep"
-command -v ast-grep >/dev/null 2>&1 && echo "ast-grep available (optional)" || true
 ```
 
 **Recommended approach:**
-1. Use `rg` patterns defined in the framework-specific sections below (CLI Tools, Terraform Providers).
+1. Use `rg` patterns from the detected framework section below.
 2. If `rg` not available, substitute `grep -n` patterns (shown in each section).
-3. If `ast-grep` is installed and a pattern requires structural understanding, it can be used as an alternative, but is optional.
 
-**API audits:** Skip this check. API specs (YAML/JSON) are not supported by rg/ast-grep; use standard parsing tools (jq, yq, grep) as described in the API audit section.
+**API audits:** Skip this check. API specs (YAML/JSON) are not supported by rg; use standard parsing tools (jq, yq, grep) as described in the API audit section.
 
-#### CLI Tools: Cobra (Go) Commands and Flags
+#### Detected: cobra-go (Go CLI using Cobra)
 
-**Commands (Task 1):**
+**Task 1: Command Tree Comparison**
+
+Commands are registered via `AddCommand()`:
 ```bash
 rg '\.AddCommand\(' --type go
-rg 'cobra\.Command\{' --type go
 grep -n "AddCommand(" *.go  # if rg unavailable
 ```
 
-**Flags (Task 2):**
+**Task 2: Flag and Argument Audit**
+
+Flags defined via `Flags().StringVar()`, `Flags().BoolVar()`, etc.:
 ```bash
 rg '\.Flags\(\)\.(StringVar|BoolVar|IntVar)' --type go
 rg '\.PersistentFlags\(\)\.' --type go
 grep -n "\.Flags()" *.go  # if rg unavailable
 ```
 
-**Note on ast-grep:** ast-grep can structurally match call expressions but cobra patterns are complex; text search via `rg`/`grep` is more reliable and faster for this use case.
+**Tasks 3-4:** Follow standard CLI audit procedure (upstream vs downstream, semantic logic check).
 
-#### Terraform Providers: Go Resources and Schema
+---
 
-**Resources (Task 1):**
+#### Detected: argparse (Python CLI using argparse)
+
+**Task 1: Command Tree Comparison**
+
+Commands are registered via subparsers:
 ```bash
-rg '"[A-Za-z_]+": \(' --type go  # schema.StringAttribute{...}
-rg 'ResourceMap\[' --type go     # resource registry patterns
-grep -n '"[a-z_]*":' *.go        # if rg unavailable
+rg 'ArgumentParser\(' --type py
+rg '\.add_subparsers\(' --type py
+grep -n "ArgumentParser\|add_subparsers" *.py  # if rg unavailable
 ```
 
-**Schema (Task 2):**
+**Task 2: Flag and Argument Audit**
+
+Arguments defined via `add_argument()`:
+```bash
+rg '\.add_argument\(' --type py
+grep -n "add_argument" *.py  # if rg unavailable
+```
+
+**Tasks 3-4:** Follow standard CLI audit procedure.
+
+---
+
+#### Detected: click (Python CLI using Click)
+
+**Task 1-2: Commands and Options**
+
+Click uses decorators for commands and options:
+```bash
+rg '@click\.(command|group)\(' --type py
+rg '@click\.(option|argument)\(' --type py
+grep -n "@click\." *.py  # if rg unavailable
+```
+
+**Tasks 3-4:** Follow standard CLI audit procedure.
+
+---
+
+#### Detected: bash-dispatch (Bash CLI with function dispatch)
+
+**Task 1: Command Tree Comparison**
+
+Commands are defined as `cmd_*()` functions:
+```bash
+rg '^cmd_[a-z_]+\(' --include='*.sh' .
+find . -type f ! -name '*.sh' -exec grep -l '^cmd_' {} \;  # includes executable bash scripts
+grep -n "^cmd_" *.sh  # if rg unavailable
+```
+
+**Task 2: Flag and Argument Audit**
+
+Flags parsed via case statements:
+```bash
+rg 'case\s+"\$1"\s+in' --type sh
+grep -n "case.*\$1.*in" *.sh  # if rg unavailable
+```
+
+**Tasks 3-4:** Follow standard CLI audit procedure.
+
+---
+
+#### Detected: terraform (Go Terraform Provider)
+
+**Task 1: Resource and Data Source Registry**
+
+Resources registered via schema definitions:
+```bash
+rg '"[A-Za-z_]+": \(' --type go
+rg 'ResourceMap\[' --type go
+grep -n '"[a-z_]*":' *.go  # if rg unavailable
+```
+
+**Task 2: Schema Attribute Audit**
+
+Schema fields like Description, Type, Required, Default:
 ```bash
 rg 'Description:|Type:|Required:|Optional:|Default:|ValidateFunc:' --type go
 grep -n "Description:\|Default:\|Required:" *.go  # if rg unavailable
 ```
 
-**Note:** For definitive schema, prefer `terraform providers schema -json` (Task 2, Method 1 in skill description) when available. Go code inspection is a secondary verification.
+**Preferred method:** Use `terraform providers schema -json` for definitive schema (Task 2, Method 1 in skill description). Go code inspection is secondary verification.
+
+**Tasks 3-4:** Follow standard Terraform audit procedure.
 
 Follow these **Strict Adherence Rules** religiously:
 
@@ -586,9 +678,10 @@ If the docs have multiple complex examples, ask the user which one to validate i
 5. **Include metadata footer** -- Always end the report with AI provider, model name, and timestamp.
 6. **Deliver the report as Markdown** -- Save it, then show the user the path and key findings.
 7. **Use domain-appropriate methods** -- Source code for CLI, schema inspection + Go code for Terraform, spec parsing for API.
-8. **Search tool policy (CLI/Terraform):** Use `rg` (ripgrep) or `grep` for source code pattern search. The patterns in "Source Search Tool" subsection (Step 4) are optimized for text search. `ast-grep` is optional for complex structural patterns; if used, cite which tool was used in the report. API audits do not use code search tools.
-9. **Verification pass required** -- Before writing any report section, run the 3 checks in "Verify Before Writing Report": traceability, direction accuracy, exclusivity gate. All findings must cite search evidence inline.
-10. **No emojis or icons** -- Use plain text verdicts and labels only. No decorative characters in the report or in conversational responses.
+8. **Framework auto-detection (CLI/Terraform):** Use `detect-cli-framework.py` to automatically identify which patterns to use. If detection fails or returns "unknown", ask the user to clarify the framework and offer manual options. Detection results guide pattern selection in Step 4.
+9. **Search tool policy (CLI/Terraform):** Use `rg` (ripgrep) or `grep` for source code pattern search. Patterns are optimized for text search, not AST. The "Source Search Tool" and framework-specific sections provide patterns for each detected framework. API audits do not use code search tools.
+10. **Verification pass required** -- Before writing any report section, run the 3 checks in "Verify Before Writing Report": traceability, direction accuracy, exclusivity gate. All findings must cite search evidence inline.
+11. **No emojis or icons** -- Use plain text verdicts and labels only. No decorative characters in the report or in conversational responses.
 
 ---
 
