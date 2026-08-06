@@ -1,17 +1,31 @@
-# Documentation Quality Skills
+# doc-quality
 
-A suite of four skills for CLI documentation auditing with zero-hallucination verification and auto-framework detection.
+Comprehensive documentation accuracy and quality auditing for code projects.
+
+**Latest Release:** v1.2 (2026-08-06) — [Release Notes](RELEASE-NOTES-v1.2.md)
 
 ## The Problem
 
-CLI documentation drifts from code: users hit undocumented flags, missing commands, or flags that behave differently than documented. This suite prevents that by comparing docs against actual code and catching quality issues.
+Documentation drifts from code: users hit undocumented features, missing commands, or behavior that doesn't match docs. Code structure changes outpace doc updates. Quality issues (unclear writing, inconsistent terminology) go undetected. This suite prevents that by automatically comparing docs against code and assessing documentation quality.
 
 ## What This Does
-- Compares your documentation against actual CLI code (never hallucinates)
-- Auto-detects your CLI framework (argparse, Cobra, Bash, Click)
-- Audits for ghost items (documented but missing) and quality issues
-- Prevents tone shifts, clarity problems, and consistency gaps
-- Applies fixes interactively
+
+**Accuracy Auditing**
+- Compares documentation against actual code (never hallucinates)
+- Auto-detects project type and framework (CLI, library, extension)
+- Finds ghost items (documented but missing in code)
+- Finds hidden items (exist in code but undocumented)
+- Catches detail mismatches (flags/params with different defaults)
+
+**Quality Auditing**
+- Assesses tone, clarity, structure, consistency, completeness
+- Checks audience appropriateness, examples quality, plain language
+- Reports issues with severity, citations, and fix suggestions
+
+**Verification Passes**
+- 6-check accuracy pass prevents uncited claims, direction inversion
+- 3-check quality pass prevents paraphrased quotes, miscalibrated confidence
+- Zero-hallucination guarantee: every finding cites evidence
 
 ## Skills
 
@@ -32,18 +46,24 @@ CLI documentation drifts from code: users hit undocumented flags, missing comman
 /doc-quality-check  → runs all three in sequence
 ```
 
-## What's Supported (v1)
+## What's Supported (v1.2)
 
-**Accuracy Audit:** Auto-detects code structure, finds ghost items, hidden items, detail mismatches
-- CLI tools: argparse (Python), Cobra (Go), Click (Python), Bash function dispatch
-- Python libraries: classes, functions, public API (__all__)
+**Code Project Types:**
+- CLI tools: Cobra (Go), argparse/Click (Python), Bash function dispatch
+- Python libraries: classes, functions, public API (__all__ exports)
 - VS Code extensions: commands, settings, activation events
-- General code: structure detection for language/framework agnostic auditing
 
-**Quality Audit:** Works on any documentation (tone, clarity, consistency, completeness, audience, examples)
-- All docs types: libraries, extensions, CLIs, guides, API documentation
+**Polyglot Detection:**
+- Root manifest priority ensures correct primary type detection
+- Handles multi-language projects correctly (e.g., TypeScript with Python build scripts)
 
-**Deferred to v2:** Terraform providers, OpenAPI/Swagger specs. See [V1-SCOPE.md](docs/V1-SCOPE.md) for details.
+**Quality Dimensions:**
+- All documentation types: libraries, extensions, CLIs, guides, API documentation
+- 10 dimensions: tone, clarity, structure, consistency, completeness, audience, examples, formatting, SEO, plain language
+
+**Deferred to v2:**
+- Terraform providers, OpenAPI/Swagger specs
+- See [V1-SCOPE.md](docs/V1-SCOPE.md) for detailed scope
 
 ## Installation
 
