@@ -35,6 +35,20 @@
       "prompt": "Can you audit docs/getting-started/ for quality issues? Use --dry-run flag so I can see what the report would look like without saving it.",
       "expected_output": "The skill should perform normal audit on docs/getting-started/. After audit completes, should show full report to screen with summary and findings. Should display 'DRY RUN: Would save to {filename}' message. Should NOT write file. Should END without asking to save.",
       "files": ["docs/getting-started/*.md"]
+    },
+    {
+      "id": 6,
+      "type": "quote-traceability",
+      "prompt": "Audit the clarity of docs/getting-started.md. The file contains this exact sentence: 'Simply run the following command to get started.' I want to make sure any finding about that sentence quotes it exactly.",
+      "expected_output": "Any finding about the 'Simply' usage must quote the exact text from the document. The Current Text in the finding must match the source verbatim — not paraphrased, not approximate. The verification pass should catch and correct any quote drift before output.",
+      "files": ["docs/getting-started.md"]
+    },
+    {
+      "id": 7,
+      "type": "confidence-gate",
+      "prompt": "Audit docs/reference.md for plain language issues. The file contains a 47-word sentence. Flag it with appropriate confidence level.",
+      "expected_output": "A 47-word sentence violates Plain Language #1 (40-word limit). This is an objective, measurable rule violation and must be labeled CRITICAL (High Confidence) with the rule citation 'Plain Language #1'. A finding on this issue with no rule citation or labeled Medium Confidence should be corrected by the verification pass.",
+      "files": ["docs/reference.md"]
     }
   ]
 }

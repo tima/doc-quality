@@ -1,7 +1,6 @@
 ---
 name: doc-accuracy-audit
 description: "Use when you need to cross-reference documentation against a source of truth — CLI source code, Terraform provider schemas, or OpenAPI specs. Triggers on: 'audit docs against source', 'verify docs match code', 'find ghost commands', 'check for undocumented resources', 'compare docs to schema'."
-compatibility: Requires source access (code/schema/spec) and docs (local/URLs)
 ---
 
 # doc-accuracy-audit
@@ -125,6 +124,22 @@ Perform the requested tasks.
 
 **If incremental mode active:** Only audit files in `changed_files` list (see [CONFIG.md](../../CONFIG.md#incremental-mode---since)).
 
+### Source Search Tool
+
+**For CLI and Terraform project types only** (skip this section for API audits):
+
+Check for ast-grep availability:
+
+```bash
+command -v sg >/dev/null 2>&1 && echo "sg available" || echo "sg not found"
+```
+
+- If available: use `sg` for source code searches throughout this step.
+- If not found: "Note: `sg` (ast-grep) is not installed. Source searches will use `rg`/`grep` instead. Installing `sg` gives syntax-aware structural search — results contain only real code constructs, not matches inside strings or comments, which reduces context noise. See https://ast-grep.github.io/guide/quick-start.html"
+- If found: proceed silently.
+
+**API audits:** Skip this check. API specs (YAML/JSON) are not supported by sg; use standard parsing tools (jq, yq, grep) as described in the API audit section.
+
 Follow these **Strict Adherence Rules** religiously:
 
 ### Zero-Hallucination Policy
@@ -170,9 +185,33 @@ Follow the subsection that matches the identified project type.
 Show progress: "Auditing commands... [Task 1/4]"
 Read source code for command registration patterns (Cobra, argparse, Click, or framework-specific). List all registered commands and subcommands. Compare against the documented command list. Flag ghost commands (documented but not in code) and hidden commands (in code but not documented).
 
+**For Cobra (Go) CLIs, if sg is available:**
+```bash
+sg --lang go -p '$PARENT.AddCommand($$$)' .
+sg --lang go -p '&cobra.Command{$$$}' .
+```
+**Fallback (if sg not available):**
+```bash
+rg '\.AddCommand\(' --type go
+rg 'cobra\.Command{' --type go
+```
+
 **Task 2 -- Flag and Argument Audit:**
 Show progress: "Auditing flags... [Task 2/4]"
 For each command in scope, extract flags and arguments from source code: names, aliases, types, default values, constraints, required/optional status. Compare against documented flags. Flag naming mismatches, missing defaults, incorrect types, and undocumented constraints.
+
+**For Cobra (Go) CLIs, if sg is available:**
+```bash
+sg --lang go -p '$FLAGS.StringVar($$$)' .
+sg --lang go -p '$FLAGS.BoolVar($$$)' .
+sg --lang go -p '$FLAGS.IntVar($$$)' .
+sg --lang go -p '$FLAGS.StringP($$$)' .
+```
+**Fallback (if sg not available):**
+```bash
+rg '\.Flags\(\)\.' --type go
+rg '\.PersistentFlags\(\)\.' --type go
+```
 
 **Task 3 -- Upstream vs Downstream Alignment:**
 Show progress: "Checking alignment... [Task 3/4]"
@@ -188,8 +227,30 @@ Pick the most representative command (or let the user choose). Trace its executi
 Show progress: "Auditing resources... [Task 1/4]"
 Identify all resources and data sources registered in the provider code. Compare against the documented resource list. Flag ghost resources (documented but not registered) and hidden resources (registered but not documented).
 
+**For Go-based providers, if sg is available:**
+```bash
+sg --lang go -p '"$NAME": $FUNC()' .
+```
+**Fallback (if sg not available):**
+```bash
+rg '"[A-Za-z_]+":' --type go | grep -E 'resource|datasource'
+```
+
 **Task 2 -- Schema Attribute Audit:**
 For each resource or data source in scope, extract the schema: attribute names, types, required/optional/computed status, default values, validation rules, deprecation notices. Compare against documented attributes. Flag mismatches in any of these fields.
+
+**For Go-based providers, if sg is available:**
+```bash
+sg --lang go -p '"$ATTR": {$$$}' .
+sg --lang go -p 'Default: $VAL' .
+sg --lang go -p 'Required: $VAL' .
+sg --lang go -p 'ValidateFunc: $$$' .
+```
+**Fallback (if sg not available):**
+```bash
+rg '"[a-z_]+": {' --type go
+rg 'Default:' --type go
+```
 
 **Task 3 -- Upstream vs Downstream Alignment:**
 Compare upstream docs (Terraform Registry, community docs) against downstream docs (enterprise product docs). Flag any enterprise claims that contradict the schema or source code. If no downstream docs, skip this task and note it.
@@ -272,6 +333,29 @@ If you cannot access documentation or the source of truth:
 ---
 
 ## Step 5: Format the Report
+
+### Verify Before Writing Report
+
+**[Silent — no output to user. Run before writing any section.]**
+
+Before writing the audit report, perform one of the following verification modes based on audit scope:
+
+**Full verification mode** (≤50 items audited): Run all 6 checks below.
+**Spot-check mode** (>50 items audited): Run checks 1, 3, and 4 on High Confidence findings only.
+
+**The 6 verification checks:**
+
+1. **Traceability:** Every ghost/hidden/mismatch finding must cite a tool result — a grep/sg match, file path, schema field, or 0-result search count. A finding with no cited evidence must be removed or downgraded to Low Confidence with "Needs manual verification."
+
+2. **Direction accuracy:** Re-read evidence for every "Docs say X, source says Y" claim. These invert easily. The source of truth (code/spec) is always the right-hand side of "Source of Truth:". Flip any that are inverted.
+
+3. **Enumerated completeness:** Tally findings per category (ghost, hidden, mismatch). Summary counts must equal section item counts exactly. Correct any discrepancy before writing.
+
+4. **Exclusivity gate:** Any finding using "only", "not in", "missing", "absent", "not found", or "not documented" must cite the search command and its result count inline: `(searched: rg "flag-name" src/ — 0 matches)` or `(searched: sg --lang go -p '$PATTERN' . — 0 matches)`. A 0-result grep IS evidence; gate this check to logical scope-claims, not confirmatory 0-results.
+
+5. **Verdict consistency:** Scan for any item appearing under more than one verdict column (e.g., same flag listed as both Ghost and Hidden). Remove duplicates; pick the verdict supported by evidence.
+
+6. **Named entity type:** Commands are commands, flags are flags, resources are resources, attributes are attributes. Check that entity type labels in findings match what was actually found in the source.
 
 ### File naming
 
@@ -464,7 +548,8 @@ If the docs have multiple complex examples, ask the user which one to validate i
 5. **Include metadata footer** -- Always end the report with AI provider, model name, and timestamp.
 6. **Deliver the report as Markdown** -- Save it, then show the user the path and key findings.
 7. **Use domain-appropriate methods** -- Source code for CLI, schema inspection + Go code for Terraform, spec parsing for API.
-8. **No emojis or icons** -- Use plain text verdicts and labels only. No decorative characters in the report or in conversational responses.
+8. **Search tool policy (CLI/Terraform)** -- Use `sg` (ast-grep) for all source code searches. Infer `--lang go` for both Cobra CLI and Terraform Go sources. Fall back to `rg`/`grep` only when sg is unavailable or cannot express the pattern; note in the report which tool was used. API audits do not use sg.
+9. **No emojis or icons** -- Use plain text verdicts and labels only. No decorative characters in the report or in conversational responses.
 
 ---
 

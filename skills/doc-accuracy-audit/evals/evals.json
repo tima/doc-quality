@@ -63,6 +63,20 @@
       "prompt": "We have an OpenAPI 3.1 spec at /Users/me/api/spec.yaml and two sets of docs: the public docs at https://api.example.com/docs and internal enterprise docs at https://internal.example.com/api-guide. The enterprise docs claim there's a rate limiting header 'X-Custom-RateLimit' that isn't in the public docs. Can you check if the spec supports this and if the two doc sets are consistent?",
       "expected_output": "The skill should identify this as an API documentation audit with downstream docs. Should perform Task 3 (multi-source alignment) comparing public vs enterprise docs, and verify both against the spec. Should check if 'X-Custom-RateLimit' appears in the spec's response headers or security schemes. Report should flag any contradictions between the three sources without trying to reconcile them.",
       "files": []
+    },
+    {
+      "id": 10,
+      "type": "cli",
+      "prompt": "Audit docs for a CLI tool. The docs mention a --profile flag. I want to verify if that flag actually exists in the source code at /tmp/my-cli-src/. Just check whether --profile is real.",
+      "expected_output": "Skill must search the source code for --profile (using sg or rg) and explicitly state the search command and result count. A ghost finding for --profile requires: the exact search run, the file(s) searched, and the count (0 matches). The skill must NOT state '--profile is absent' without showing a confirmed search result.",
+      "files": []
+    },
+    {
+      "id": 11,
+      "type": "cli-sg",
+      "prompt": "Audit a Cobra CLI tool's flag documentation. Source is a local Go repo at /tmp/cobra-cli. I have sg (ast-grep) installed. Check if the flags in docs match what's registered in code.",
+      "expected_output": "When sg is available, the skill should use sg --lang go patterns for flag detection (StringVar, BoolVar, etc.) rather than plain grep. The audit output or process should reference sg commands. If sg is not available, the skill should mention ast-grep is not installed and use rg/grep with the encouraging install nudge.",
+      "files": []
     }
   ]
 }
