@@ -67,6 +67,20 @@ Documentation drifts from code: users hit undocumented features, missing command
 
 ## Installation
 
+### System Requirements
+
+**Required:**
+- `rg` (ripgrep) — Fast regex search for source code
+  - macOS: `brew install ripgrep`
+  - CentOS/RHEL: `yum install ripgrep`
+  - See https://github.com/BurntSummaryxyz/ripgrep#installation
+
+- `python3` — For project type detection and Python library auditing
+
+**Optional:**
+- `sg` (ast-grep) — Structural code search, planned for v1.2 (Terraform/OpenAPI support)
+  - See https://ast-grep.github.io/guide/quick-start.html
+
 **Option 1: Local development (recommended for testing)**
 ```bash
 git clone <repo-url> ~/projects/doc-quality

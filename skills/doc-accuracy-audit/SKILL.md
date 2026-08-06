@@ -352,6 +352,8 @@ Follow these **Strict Adherence Rules** religiously:
 
 Follow the canonical policy in [CONFIG.md](../../CONFIG.md#zero-hallucination-policy).
 
+For doc-accuracy-audit, tool results include: grep/rg search output, file reads (docs and source), schema inspection (for Terraform/API v2), Python AST parsing (library detection), and JSON/YAML parsing (config inspection). Every finding must cite at least one of these sources or be removed before report output.
+
 ### Contradiction Flagging
 
 - If you find conflicting data (docs say X, source of truth says Y, examples show Z), do NOT try to reconcile.
@@ -426,6 +428,10 @@ Compare claims between upstream (official/community) docs and downstream (enterp
 **Task 4 -- Semantic Logic Check:**
 Show progress: "Verifying behavior... [Task 4/4]"
 Pick the most representative command (or let the user choose). Trace its execution path in the source code. Verify that the documented behavior (input handling, output format, error behavior, side effects) matches the implementation.
+
+**Important:** Distinguish between actual code behavior and developer-stated intent (docstrings/comments). If a default value is documented:
+- If found in **code** (e.g., `timeout := 30`): **Source of Truth:** code, behavior is verified.
+- If found only in **docstring/comment** (e.g., `// defaults to 30s`): label as **Developer-Stated Intent (Not Verified):** [file:line]. Do NOT treat as verified behavior; note that the actual default requires manual code inspection.
 
 ---
 
@@ -755,5 +761,13 @@ If the docs have multiple complex examples, ask the user which one to validate i
 **Impact:** "Hidden items" list may include intentionally private classes/functions.
 
 **Mitigation:** Check `__all__` exports or ignore symbols starting with `_` (underscore).
+
+### Schema Version Validity (v2 Deferred)
+
+**Issue:** v1 audits CLI tools, Python libraries, and VS Code extensions. Schema-based auditing (Terraform providers, OpenAPI/Swagger specs) is deferred to v2.
+
+**Note for v2:** When auditing Terraform or API schemas, verify the schema version (e.g., JSON Schema draft, OpenAPI version) before validating keyword presence. A keyword valid in JSON Schema draft-2020-12 may not exist in draft-07. This check will be required before any schema attribute audit.
+
+**Status:** Not applicable to v1. Will be implemented in v1.2+ (Terraform/OpenAPI support).
 
 ---
