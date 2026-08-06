@@ -2,7 +2,11 @@
 
 A suite of four skills for CLI documentation auditing with zero-hallucination verification and auto-framework detection.
 
-**What this does:**
+## The Problem
+
+CLI documentation drifts from code: users hit undocumented flags, missing commands, or flags that behave differently than documented. This suite prevents that by comparing docs against actual code and catching quality issues.
+
+## What This Does
 - Compares your documentation against actual CLI code (never hallucinates)
 - Auto-detects your CLI framework (argparse, Cobra, Bash, Click)
 - Audits for ghost items (documented but missing) and quality issues

@@ -140,7 +140,7 @@ Running documentation quality check on {docs_path}
 
 1. Announce: "Running accuracy + quality audits in parallel"
 
-2. Invoke BOTH skills concurrently (single message, two Skill tool calls):
+2. Invoke BOTH skills concurrently (single message, two skill tool calls):
    ```
    /doc-accuracy-audit {docs_path} --output {accuracy_report_file} {--dry-run if dry_run} {--since <ref> if since_ref} {--type <val> if type_flag} {--source <val> if source_flag}
    /doc-quality-audit {docs_path} --output {quality_report_file} {--dry-run if dry_run} {--since <ref> if since_ref} {--dimensions <val> if dimensions_flag}
@@ -171,7 +171,7 @@ Running documentation quality check on {docs_path}
 
 1. Announce: "Phase 1/X: Accuracy audit" (X = total phases to run)
 
-2. Invoke skill using Skill tool:
+2. Invoke skill using skill tool:
    ```
    /doc-accuracy-audit {docs_path} --output {accuracy_report_file} {--dry-run if dry_run} {--since <ref> if since_ref} {--type <val> if type_flag} {--source <val> if source_flag}
    ```
@@ -202,7 +202,7 @@ Running documentation quality check on {docs_path}
 
 1. Announce: "Phase 2/X: Quality audit"
 
-2. Invoke skill using Skill tool:
+2. Invoke skill using skill tool:
    ```
    /doc-quality-audit {docs_path} --output {quality_report_file} {--dry-run if dry_run} {--since <ref> if since_ref} {--dimensions <val> if dimensions_flag}
    ```
