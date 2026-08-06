@@ -63,7 +63,7 @@ Documentation drifts from code: users hit undocumented features, missing command
 
 **Tool Compatibility:**
 - Works with any AI tool supporting agent skills
-- No Claude-specific dependencies
+- Tool-agnostic (no vendor lock-in)
 
 **Deferred to v2:**
 - Terraform providers, OpenAPI/Swagger specs

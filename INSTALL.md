@@ -1,6 +1,6 @@
 # Installation Guide
 
-Install doc-quality skills from any AI tool via Claude Code CLI or local development.
+Install doc-quality skills from any AI tool supporting agent skills.
 
 ## Installation via npx skills (Recommended)
 
