@@ -1,6 +1,6 @@
 ---
 name: doc-accuracy-audit
-description: "Use when you need to cross-reference documentation against a source of truth — CLI source code, Terraform provider schemas, or OpenAPI specs. Triggers on: 'audit docs against source', 'verify docs match code', 'find ghost commands', 'check for undocumented resources', 'compare docs to schema'."
+description: "Use when you need to cross-reference documentation against a source of truth — CLI source code, Python library source, VS Code extension source, Terraform provider schemas, or OpenAPI specs. Triggers on: 'audit docs against source', 'verify docs match code', 'find ghost commands', 'find undocumented classes', 'check for undocumented resources', 'compare docs to schema'."
 ---
 
 # doc-accuracy-audit
@@ -11,12 +11,22 @@ Cross-reference documentation against source code, schemas, or specs to find gho
 
 You are a Senior Software Engineer and Technical Documentation Auditor. Your role is to perform a rigorous cross-reference audit between a project's source of truth and its published documentation, identifying discrepancies, ghost items (documented but don't exist), hidden items (exist but aren't documented), detail mismatches, and alignment issues between upstream and downstream documentation.
 
-This skill supports CLI tools in v1:
+This skill supports multiple code project types in v1:
 
 - **CLI Tools** (v1) -- Audit source code against CLI documentation
   - Supported frameworks: argparse (Python), Cobra (Go), Click (Python), Bash function dispatch
   - Checks: Commands, flags, arguments, defaults, subcommands
   - Auto-detects framework; no manual framework selection needed
+
+- **Python Libraries** (v1) -- Audit source code against library documentation
+  - Detects: Classes, functions, public API (__all__ exports)
+  - Checks: Class definitions, method signatures, public functions, exported symbols
+  - Auto-detects structure from setup.py, pyproject.toml, class/function counts
+
+- **VS Code Extensions** (v1) -- Audit source code against extension documentation
+  - Detects: Commands, settings, activation events, contributions
+  - Checks: Registered commands (registerCommand), settings in package.json, contribution points
+  - Auto-detects from package.json and TypeScript source
 
 **Deferred to v2 (not yet implemented):**
 - Terraform Providers -- Planned for future release
@@ -59,22 +69,34 @@ Stop and ask the user for the following information. Do NOT proceed to the audit
 First, determine which type of project you are auditing:
 
 - **CLI Tool** -- A command-line tool with commands, subcommands, flags, and arguments
-- **Terraform Provider** -- A Terraform provider with resources, data sources, and schema attributes
-- **API Documentation** -- An API with an OpenAPI/Swagger specification
+- **Python Library** -- A Python package with classes, functions, and public API exports
+- **VS Code Extension** -- A TypeScript extension with commands, settings, and contributions
+- **Terraform Provider** -- A Terraform provider with resources, data sources, and schema attributes (v2)
+- **API Documentation** -- An API with an OpenAPI/Swagger specification (v2)
 
-If `--type` flag provided, use that value. Otherwise, if the project type is not clear from the user's request, ask: "What type of project is this -- a CLI tool, a Terraform provider, or an API with an OpenAPI spec?"
+If `--type` flag provided, use that value. Otherwise, if the project type is not clear from the user's request, ask: "What type of project is this -- a CLI tool, a Python library, a VS Code extension, a Terraform provider, or an API with an OpenAPI spec?"
 
 ### Context Questions by Type
 
 **All project types:**
 
-1. **Project Name** -- What are you auditing? (e.g., Podman, terraform-provider-aws, Acme API)
-2. **Upstream Documentation** -- Link to official/community docs, or local path
+1. **Project Name** -- What are you auditing? (e.g., Podman, django-ansible-base, vscode-ansible, terraform-provider-aws, Acme API)
+2. **Documentation** -- Link to official docs, or local path (can be same as source if docs are in the repo)
 3. **Downstream Documentation (Optional)** -- Enterprise/product-specific docs, if applicable. User can state "None" or "N/A" if not relevant.
 
 **CLI Tools -- additional questions:**
 
 4. **Source Code Repository** -- Link to the repo, or local path if available
+
+**Python Libraries -- additional questions:**
+
+4. **Source Code Repository** -- Link to the repo, or local path if available
+5. **Entry Points** -- If multiple setup.py/pyproject.toml files, which is the primary one to audit?
+
+**VS Code Extensions -- additional questions:**
+
+4. **Source Code Repository** -- Link to the repo, or local path if available
+5. **TypeScript Source Path** -- Where is the main extension code? (e.g., src/, extension/), or auto-detect?
 
 **Terraform Providers -- additional questions:**
 
@@ -96,12 +118,12 @@ Ask these in a conversational way. If the user provides some but not all context
 
 Once you have the context, explain the full audit scope. The audit has 4 tasks that map to each project type:
 
-| Task | CLI | Terraform | API |
-|------|-----|-----------|-----|
-| 1. Inventory | Command tree vs docs | Resource/data source registry vs docs | Endpoint/operation list vs docs |
-| 2. Detail Audit | Flags, defaults, aliases | Schema attributes, types, required/optional | Parameters, response schemas, auth |
-| 3. Multi-Source Alignment | Upstream vs downstream docs | Registry vs enterprise docs | Spec vs docs site |
-| 4. Example Validation | Trace command through code | Validate HCL against schema | Validate examples against spec |
+| Task | CLI | Python Library | VS Code Extension | Terraform (v2) | API (v2) |
+|------|-----|------------------|-------------------|-----------|----------|
+| 1. Inventory | Command tree vs docs | Classes/functions vs docs | Commands/settings vs docs | Resource registry vs docs | Endpoint list vs docs |
+| 2. Detail Audit | Flags, defaults, aliases | Method signatures, return types | Command params, settings schema | Schema attributes, types | Parameters, responses, auth |
+| 3. Multi-Source Alignment | Upstream vs downstream docs | Package docs vs API docs | Marketplace vs docs site | Registry vs enterprise docs | Spec vs docs site |
+| 4. Example Validation | Trace command through code | Validate class instantiation | Validate command registration | Validate HCL against schema | Validate examples against spec |
 
 Present the 4 tasks using the labels appropriate to the project type.
 
@@ -129,31 +151,32 @@ Perform the requested tasks.
 
 **If incremental mode active:** Only audit files in `changed_files` list (see [CONFIG.md](../../CONFIG.md#incremental-mode---since)).
 
-### Framework Auto-Detection (CLI & Terraform)
+### Code Structure Auto-Detection
 
-**For CLI and Terraform project types only** (skip for API audits):
+**For CLI, Python Library, and VS Code Extension project types** (skip for Terraform and API audits):
 
-Automatically detect which CLI framework or provider pattern is in use. This eliminates manual guessing and selects the right patterns for code analysis.
+Automatically detect the project type and framework/structure in use. This eliminates manual guessing and selects the right patterns for code analysis.
 
 **Detection process (silent, no user interaction):**
 
 ```bash
-# Detect framework from code path
+# Detect project type and framework from code path
 python3 skills/doc-accuracy-audit/lib/detect-cli-framework.py <code-path>
 ```
 
 Returns JSON with:
-- `framework`: Detected framework name (cobra-go, argparse, click, bash-dispatch)
+- `type`: Project type (cli, python-library, vscode-extension)
+- `framework`: Detected framework name (cobra-go, argparse, click, bash-dispatch, python-library, vscode-extension)
 - `confidence`: high/medium/low based on file count
-- `patterns`: Search patterns to use for this framework
+- `patterns`: Search patterns to use for this type/framework
 - `message`: Human-readable result
 
-**If detection succeeds:** Use patterns from returned framework section below.  
-**If detection fails or unknown:** Ask user to clarify framework; offer manual pattern selection.
+**If detection succeeds:** Use patterns from the appropriate section below (CLI, Python Library, or VS Code Extension).  
+**If detection fails or unknown:** Ask user to clarify type; offer manual pattern selection.
 
 ### Source Search Tool
 
-**For CLI and Terraform project types only** (skip this section for API audits):
+**For CLI, Python Library, and VS Code Extension project types** (skip for Terraform and API audits):
 
 Search for source code patterns using text-based tools. `rg` (ripgrep) is preferred if available; `grep` is the fallback.
 
@@ -167,7 +190,7 @@ command -v rg >/dev/null 2>&1 && echo "rg available" || echo "Using grep"
 1. Use `rg` patterns from the detected framework section below.
 2. If `rg` not available, substitute `grep -n` patterns (shown in each section).
 
-**API audits:** Skip this check. API specs (YAML/JSON) are not supported by rg; use standard parsing tools (jq, yq, grep) as described in the API audit section.
+**Terraform and API audits:** Skip this check. Terraform schemas and API specs use specialized tools (grep/jq/yq) described in their respective audit sections.
 
 #### Detected: cobra-go (Go CLI using Cobra)
 
@@ -251,6 +274,77 @@ grep -n "case.*\$1.*in" *.sh  # if rg unavailable
 
 **Tasks 3-4:** Follow standard CLI audit procedure.
 
+---
+
+#### Detected: python-library (Python Library or Package)
+
+**Task 1: Class and Function Inventory**
+
+Classes and top-level functions are the public API:
+```bash
+rg '^class ' --type py | head -30  # or: grep -n "^class " *.py
+rg '^def [^_]' --type py | head -30  # top-level functions (non-private)
+```
+
+Check for `__all__` declaration (explicit public API):
+```bash
+rg '__all__' --type py
+grep -n "__all__" *.py
+```
+
+**Task 2: Signature and Export Audit**
+
+For each class in docs, verify:
+- Class exists in code with matching name
+- Methods listed in docs are present in source
+- Public functions (not starting with `_`) listed in docs exist
+
+For each exported symbol (in `__all__` or docs), verify:
+```bash
+rg 'class ClassName' --type py
+rg 'def function_name' --type py
+```
+
+**Tasks 3-4:** Follow standard audit procedure for library docs: check parameter descriptions, return types, exceptions match code.
+
+---
+
+#### Detected: vscode-extension (VS Code Extension)
+
+**Task 1: Command and Setting Inventory**
+
+Commands are registered in `package.json` and in source code:
+```bash
+grep '"commands"' package.json  # in contributes section
+rg 'registerCommand' --type ts
+```
+
+Settings/configuration points:
+```bash
+grep '"configuration"' package.json
+rg 'workspace\.getConfiguration' --type ts
+```
+
+**Task 2: Command and Setting Details**
+
+For each command in docs, verify:
+- Command ID exists in package.json `contributes.commands`
+- Command registered via `registerCommand()` in source
+- Title, description, category match declarations
+
+For each setting in docs, verify:
+- Setting ID exists in package.json `contributes.configuration`
+- Default value documented matches schema default
+- Type (string, boolean, number, etc.) matches docs
+
+```bash
+rg 'registerCommand\([\'"]' --type ts  # extract command IDs
+grep -A2 '"id":' package.json | grep -E '(title|description|category)'
+```
+
+**Tasks 3-4:** Follow standard audit procedure for extension docs: check examples for registered commands, validate setting schemas.
+
+---
 
 Follow these **Strict Adherence Rules** religiously:
 

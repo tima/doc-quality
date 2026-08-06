@@ -34,9 +34,14 @@ CLI documentation drifts from code: users hit undocumented flags, missing comman
 
 ## What's Supported (v1)
 
-**CLI Tools:** argparse (Python), Cobra (Go), Click (Python), Bash function dispatch
-**Accuracy Audit:** Auto-detects framework, finds ghost items, hidden items, detail mismatches with zero-hallucination verification
+**Accuracy Audit:** Auto-detects code structure, finds ghost items, hidden items, detail mismatches
+- CLI tools: argparse (Python), Cobra (Go), Click (Python), Bash function dispatch
+- Python libraries: classes, functions, public API (__all__)
+- VS Code extensions: commands, settings, activation events
+- General code: structure detection for language/framework agnostic auditing
+
 **Quality Audit:** Works on any documentation (tone, clarity, consistency, completeness, audience, examples)
+- All docs types: libraries, extensions, CLIs, guides, API documentation
 
 **Deferred to v2:** Terraform providers, OpenAPI/Swagger specs. See [V1-SCOPE.md](docs/V1-SCOPE.md) for details.
 
