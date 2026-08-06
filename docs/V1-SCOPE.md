@@ -1,22 +1,32 @@
-# v1 Scope: CLI Tools Only
+# v1 Scope: CLI Tools, Libraries, and Extensions
 
 ## What v1 Covers
 
-**Supported project types:**
-- CLI tools with documentation
+**Supported project types (auto-detected):**
 
-**Supported CLI frameworks (auto-detected):**
-- Python: argparse, Click
-- Go: Cobra
-- Bash: function-based command dispatch
+1. **CLI Tools**
+   - Python: argparse, Click
+   - Go: Cobra
+   - Bash: function-based command dispatch
 
-**Accuracy audit checks:**
-- Command tree: documented commands vs code (ghost, hidden, verified)
-- Flags/arguments: documented flags vs code (ghost, hidden, mismatches in defaults, types, constraints)
-- Upstream vs downstream docs alignment (optional)
-- Semantic logic validation (documented behavior vs code implementation)
+2. **Python Libraries**
+   - Classes, functions, public API exports (__all__)
+   - setup.py, pyproject.toml, or __init__.py based detection
 
-**Quality audit checks:**
+3. **VS Code Extensions**
+   - Registered commands (registerCommand)
+   - Settings/configuration points
+   - Activation events (package.json)
+
+**Accuracy audit checks (framework-specific):**
+
+| Type | Checks |
+|------|--------|
+| CLI | Command tree, flags/arguments, defaults, types, semantic behavior |
+| Library | Classes/functions vs docs, method signatures, return types, exceptions, public API |
+| Extension | Registered commands, settings, schemas, activation logic |
+
+**Quality audit checks (all types):**
 - Tone/voice consistency
 - Clarity/readability (plain language compliance)
 - Structure/flow
@@ -30,62 +40,100 @@
 **Deferred to v2:**
 - Terraform provider schemas
 - OpenAPI/Swagger specifications
-- Configuration file schemas (pyproject.toml, ansible.cfg, etc.)
+- Configuration file schemas (ansible.cfg, etc.)
 - TypeScript CLI frameworks (Commander.js)
-- Extension/VSCode plugin documentation
 - API documentation (GraphQL, REST without OpenAPI)
 
-## Why CLI Tools First?
+## Why These Three in v1?
 
-1. **Clear source of truth:** Code is the definitive source; docs are secondary
-2. **Deterministic patterns:** Command registration and flag definition are structural and consistent
-3. **Auto-detection works:** Framework detection is reliable (tested on 3 real repos)
-4. **High value:** Many open-source projects use argparse/Cobra/Bash
-5. **Verification is straightforward:** Grep/rg patterns are reliable; no complex spec parsing needed
+1. **Clear source of truth:** Code is definitive; docs are secondary (unlike specs/schemas)
+2. **Deterministic patterns:** Registration and exports are structural and consistent
+3. **Auto-detection works:** Type detection tested on 3 real projects (django-ansible-base, vscode-ansible, abbenay)
+4. **High value:** Covers libraries, CLI tools, and extensions — major open-source categories
+5. **Verification is straightforward:** Grep/rg patterns reliable; no complex spec parsing needed
 
 ## Example Use Cases (v1)
 
-### ✓ Works: Kubernetes CLI (kubectl)
+### CLI Tools
+
+#### ✓ Works: Kubernetes CLI (kubectl)
 - Source: https://github.com/kubernetes/kubernetes (Cobra/Go)
 - Docs: https://kubernetes.io/docs/reference/kubectl/
-- Audit: Commands registered via `AddCommand()`, flags via `Flags().StringVar()`, etc.
+- Audit: Commands via `AddCommand()`, flags via `Flags().StringVar()`, etc.
 
-### ✓ Works: Ansible Creator
+#### ✓ Works: Ansible Creator
 - Source: ~/projects/ansible-creator (argparse/Python)
 - Docs: docs/ directory with command documentation
 - Audit: Parsers via `ArgumentParser()`, args via `add_argument()`, etc.
 
-### ✓ Works: dotpkg
+#### ✓ Works: dotpkg
 - Source: ~/projects/dotpkg (Bash function dispatch)
 - Docs: README with command descriptions
 - Audit: Commands via `cmd_*()` functions, options via `case` statements
 
-### ✗ Does NOT work: AWS Provider
+### Python Libraries
+
+#### ✓ Works: django-ansible-base
+- Source: ~/projects/django-ansible-base (655 classes, 1867 functions)
+- Docs: docs/ directory with API reference
+- Audit: Classes, functions, __all__ exports vs documentation
+
+#### ✓ Works (small): abbenay
+- Source: ~/projects/abbenay (13 classes, 3 functions)
+- Docs: docs/ and README with class documentation
+- Audit: Library structure detection, public API verification
+
+### VS Code Extensions
+
+#### ✓ Works: vscode-ansible
+- Source: ~/projects/vscode-ansible (339 TypeScript files, 60 commands)
+- Docs: README, wiki with command reference
+- Audit: Registered commands via `registerCommand()`, settings in package.json
+
+### Not Yet Supported (v2)
+
+### ✗ Does NOT work: AWS Provider (v2)
 - Source: terraform-provider-aws (Go schemas)
 - Docs: Terraform Registry
-- Audit: Would require v2 schema parsing (deferred)
+- Audit: Would require schema parsing (deferred to v2)
 
-### ✗ Does NOT work: OpenAPI Pet Store
+### ✗ Does NOT work: OpenAPI Pet Store (v2)
 - Source: OpenAPI 3.0 YAML spec
 - Docs: Auto-generated API docs
-- Audit: Would require v2 spec parsing (deferred)
+- Audit: Would require spec parsing (deferred to v2)
 
 ## Using the Skills
 
-### Accuracy Audit (CLI tools only)
+### Accuracy Audit (CLI, Library, Extension)
 
 ```bash
 /doc-accuracy-audit <docs-path> --source <code-path>
 ```
 
-Skill auto-detects CLI framework and runs appropriate patterns.
+Skill auto-detects project type and runs appropriate patterns.
 
-Example:
+**CLI example:**
 ```bash
 /doc-accuracy-audit docs/ --source ~/projects/ansible-creator
-# Auto-detects: argparse
+# Auto-detects: argparse CLI
 # Finds: 47 ArgumentParsers, 51 add_argument calls
-# Compares to docs, reports ghost/hidden/mismatch findings
+# Reports ghost/hidden/mismatch findings
+```
+
+**Library example:**
+```bash
+/doc-accuracy-audit docs/ --source ~/projects/django-ansible-base
+# Auto-detects: Python library (655 classes, 1867 functions)
+# Finds: documented classes vs code, method signatures
+# Reports missing/undocumented classes and functions
+```
+
+**Extension example:**
+```bash
+/doc-accuracy-audit docs/ --source ~/projects/vscode-ansible
+# Auto-detects: VS Code extension (60 registered commands)
+# Finds: documented commands, settings, activation events
+# Reports mismatches between package.json and docs
 ```
 
 ### Quality Audit (works on ANY docs)
@@ -94,22 +142,22 @@ Example:
 /doc-quality-audit <docs-path>
 ```
 
-No source code needed. Audits style, tone, clarity, completeness, etc.
+No source code needed. Audits style, tone, clarity, completeness, etc. Works on CLI, library, extension, or any other documentation.
 
 Example:
 ```bash
 /doc-quality-audit docs/
-# Checks: tone shifts, long sentences, unclear phrasing, etc.
-# Works on any markdown/rst/txt documentation
+# Checks: tone shifts, long sentences, unclear phrasing, consistency
+# Works on any markdown/rst/txt documentation for any project type
 ```
 
-### Quality Check (accuracy + quality for CLI tools)
+### Quality Check (accuracy + quality for all types)
 
 ```bash
 /doc-quality-check docs/ --source ~/path/to/code
 ```
 
-Runs both audits in sequence, then offers revisions.
+Runs both audits in sequence, then offers revisions. Works for CLI, library, or extension docs.
 
 ## Testing v1 Features
 
@@ -120,8 +168,12 @@ All features tested on real repositories:
 | argparse detection | ansible-creator | ✓ 47 files, high confidence |
 | Cobra detection | kubectl | ✓ 78 files, high confidence |
 | Bash detection | dotpkg | ✓ 8 cmd_* functions, medium confidence |
-| Pattern execution | All three | ✓ Finds expected constructs |
-| Verification passes | All three | ✓ Prevents hallucination |
+| Python library detection | django-ansible-base | ✓ 655 classes, 1867 functions, high confidence |
+| VS Code extension detection | vscode-ansible | ✓ 339 TypeScript files, 60 commands, high confidence |
+| Pattern execution (CLI) | All three CLI repos | ✓ Finds expected constructs |
+| Pattern execution (Library) | django-ansible-base, abbenay | ✓ Class/function enumeration works |
+| Pattern execution (Extension) | vscode-ansible | ✓ Command and setting detection works |
+| Verification passes | All repos | ✓ Prevents hallucination |
 | Quality audit | Any docs | ✓ Checks tone, clarity, consistency |
 
 ## Migration to v2

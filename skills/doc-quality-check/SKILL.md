@@ -13,13 +13,19 @@ Run the complete documentation quality pipeline: accuracy audit -> quality audit
 ## What This Does
 
 Orchestrates three skills in sequence:
-1. `/doc-accuracy-audit` - Compare docs against source of truth (auto-detects CLI framework or Terraform provider)
+1. `/doc-accuracy-audit` - Compare docs against source of truth (auto-detects project type: CLI, library, extension)
 2. `/doc-quality-audit` - Evaluate style, tone, clarity
 3. `/doc-quality-revise` - Apply corrections interactively
 
 All reports are timestamped to preserve audit history across runs.
 
-**Note:** For accuracy audit, you don't need to specify `--type` — the skill will auto-detect whether your code is a CLI tool (Cobra, argparse, Click, Bash) or Terraform provider. Provide `--type` only if auto-detection fails.
+**Note:** For accuracy audit, you don't need to specify `--type` — the skill will auto-detect your project type:
+- CLI tools (Cobra, argparse, Click, Bash)
+- Python libraries (classes, functions, public API)
+- VS Code extensions (commands, settings)
+- Or Terraform providers, OpenAPI specs (v2)
+
+Provide `--type` only if auto-detection fails.
 
 ## Arguments
 
