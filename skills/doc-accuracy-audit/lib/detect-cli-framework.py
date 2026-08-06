@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """
-CLI Framework Detector
-Identifies framework (Cobra/Go, argparse, Click, Bash) from source code.
-Returns: {framework, confidence, patterns_to_use, files_found}
+Code Structure Detector
+Identifies project type and patterns for accuracy auditing.
+Detects: CLI (Cobra/Go, argparse, Click, Bash), Python libraries, TypeScript extensions.
+Returns: {type, framework, confidence, patterns_to_use, files_found}
 """
 
 import os
@@ -24,50 +25,46 @@ def run_cmd(cmd, cwd=None):
         return []
 
 
-def count_files_with_pattern(code_path, patterns_by_lang):
-    """
-    Count files matching framework indicators.
-    patterns_by_lang: {extension: [grep patterns]}
-    Returns: {framework: file_count}
-    """
-    counts = defaultdict(int)
+def detect_project_type(code_path):
+    """Determine if project is CLI, Python library, TypeScript extension, or generic code."""
+    # Check for TypeScript/VS Code extension markers
+    if os.path.isfile(os.path.join(code_path, "package.json")):
+        try:
+            with open(os.path.join(code_path, "package.json")) as f:
+                pkg_content = f.read()
+                if '"contributes"' in pkg_content or '"activationEvents"' in pkg_content:
+                    return "vscode-extension"
+                if '"main"' in pkg_content or '"bin"' in pkg_content:
+                    # Check if it looks like a CLI or library
+                    if "cli" in pkg_content.lower() or "command" in pkg_content.lower():
+                        return "cli"
+                    return "typescript-library"
+        except:
+            pass
 
-    for ext, patterns in patterns_by_lang.items():
-        for pattern in patterns:
-            # Use rg if available, fall back to grep
-            cmd = f"rg {pattern} --type {ext} --files-with-matches . 2>/dev/null | wc -l"
-            try:
-                result = subprocess.run(
-                    cmd, shell=True, cwd=code_path, capture_output=True, text=True, timeout=5
-                )
-                count = int(result.stdout.strip()) if result.stdout.strip() else 0
-                if count > 0:
-                    counts[ext] += count
-            except:
-                pass
+    # Check for Python library markers (setup.py, pyproject.toml, __init__.py)
+    if os.path.isfile(os.path.join(code_path, "setup.py")) or \
+       os.path.isfile(os.path.join(code_path, "pyproject.toml")) or \
+       os.path.isfile(os.path.join(code_path, "setup.cfg")):
+        # Count Python files to distinguish library from CLI
+        py_files = run_cmd(f"find . -name '*.py' -type f 2>/dev/null | wc -l", code_path)
+        py_count = int(py_files[0]) if py_files and py_files[0].isdigit() else 0
+        if py_count > 10:
+            return "python-library"
+        return "cli"  # Small Python projects likely CLI
 
-    return counts
+    # Check for __init__.py (indicator of Python package/library)
+    init_count = len(run_cmd(f"find . -name '__init__.py' -type f 2>/dev/null", code_path))
+    if init_count > 0:
+        py_count = int(run_cmd(f"find . -name '*.py' -type f 2>/dev/null | wc -l", code_path)[0])
+        if py_count > 5:
+            return "python-library"
+
+    return "cli"  # Default to CLI detection
 
 
-def detect_framework(code_path):
-    """
-    Detect CLI framework from code_path.
-    Returns: {
-        framework: str,
-        confidence: str (high/medium/low),
-        patterns: dict,
-        files_found: int,
-        message: str
-    }
-    """
-    if not os.path.isdir(code_path):
-        return {
-            "framework": "unknown",
-            "confidence": "none",
-            "error": f"Path does not exist: {code_path}"
-        }
-
-    # Framework signatures: (name, file_extensions, key_patterns, rg_pattern)
+def detect_cli_framework(code_path):
+    """Detect CLI framework (Cobra, argparse, Click, Bash)."""
     frameworks = [
         ("cobra-go", ["go"], ["cobra", "AddCommand"], r'\.AddCommand\('),
         ("argparse", ["py"], ["argparse", "ArgumentParser"], r'ArgumentParser'),
@@ -77,15 +74,12 @@ def detect_framework(code_path):
 
     results = {}
 
-    # Count framework indicators
     for fw_name, exts, keywords, pattern in frameworks:
         count = 0
         for ext in exts:
-            # Use grep with literal pattern (not regex) for simplicity
             if fw_name == "cobra-go":
                 cmd = f"grep -r 'AddCommand(' --include='*.{ext}' . 2>/dev/null | wc -l"
             elif fw_name == "bash-dispatch":
-                # Look for cmd_ functions in .sh files AND executable bash scripts (no extension)
                 cmd = f"grep -r '^cmd_' --include='*.sh' . 2>/dev/null | wc -l"
                 try:
                     result = subprocess.run(
@@ -94,7 +88,6 @@ def detect_framework(code_path):
                     count += int(result.stdout.strip()) if result.stdout.strip() else 0
                 except:
                     pass
-                # Also check executable bash files
                 cmd = f"find . -type f ! -name '*.sh' ! -name '*.py' ! -name '*.go' -exec grep -l '^cmd_' {{}} \\; 2>/dev/null | wc -l"
             else:
                 cmd = f"grep -r '{keywords[1]}' --include='*.{ext}' . 2>/dev/null | wc -l"
@@ -110,53 +103,206 @@ def detect_framework(code_path):
         if count > 0:
             results[fw_name] = count
 
-    # Determine winner
     if not results:
-        return {
-            "framework": "unknown",
-            "confidence": "low",
-            "message": "No CLI framework detected in code"
-        }
+        return None
 
     best_fw = max(results, key=results.get)
     confidence = "high" if results[best_fw] >= 5 else "medium" if results[best_fw] >= 2 else "low"
-
-    # Map framework to patterns
-    patterns_map = {
-        "cobra-go": {
-            "commands": "rg '\\.AddCommand\\(' --type go",
-            "flags": "rg '\\.Flags\\(\\)\\.' --type go",
-            "description": "Go CLI using Cobra framework"
-        },
-        "argparse": {
-            "parsers": "rg 'ArgumentParser' --type py",
-            "arguments": "rg '\\.add_argument\\(' --type py",
-            "subparsers": "rg '\\.add_subparsers\\(' --type py",
-            "description": "Python CLI using argparse (standard library)"
-        },
-        "click": {
-            "decorators": "rg '@click\\.' --type py",
-            "commands": "rg '@click\\.command\\(\\)' --type py",
-            "description": "Python CLI using Click framework"
-        },
-        "bash-dispatch": {
-            "commands": "grep -n '^cmd_[a-z_]*() {' *.sh",
-            "dispatch": "grep -n 'case.*in' *.sh",
-            "description": "Bash CLI with function-based command dispatch"
-        }
-    }
 
     return {
         "framework": best_fw,
         "confidence": confidence,
         "files_found": results[best_fw],
-        "all_results": results,
-        "patterns": patterns_map.get(best_fw, {}),
-        "message": f"Detected {best_fw} in {results[best_fw]} files ({confidence} confidence)"
     }
+
+
+def detect_python_library(code_path):
+    """Detect Python library structure (classes, functions, public API)."""
+    # Count class definitions
+    classes = run_cmd(f"grep -r '^class ' --include='*.py' . 2>/dev/null | wc -l", code_path)
+    class_count = int(classes[0]) if classes and classes[0].isdigit() else 0
+
+    # Count function definitions (excluding methods)
+    functions = run_cmd(f"grep -r '^def ' --include='*.py' . 2>/dev/null | wc -l", code_path)
+    func_count = int(functions[0]) if functions and functions[0].isdigit() else 0
+
+    # Count __all__ declarations (public API indicator)
+    all_exports = run_cmd(f"grep -r '__all__' --include='*.py' . 2>/dev/null | wc -l", code_path)
+    all_count = int(all_exports[0]) if all_exports and all_exports[0].isdigit() else 0
+
+    confidence = "high" if class_count >= 3 or (func_count >= 5 and all_count > 0) else "medium"
+
+    return {
+        "framework": "python-library",
+        "confidence": confidence,
+        "classes_found": class_count,
+        "functions_found": func_count,
+        "all_exports_found": all_count,
+    }
+
+
+def detect_typescript_extension(code_path):
+    """Detect VS Code extension structure (commands, settings, contributes)."""
+    # Check package.json for contributes
+    pkg_file = os.path.join(code_path, "package.json")
+    contributes_count = 0
+    activation_count = 0
+    if os.path.isfile(pkg_file):
+        try:
+            with open(pkg_file) as f:
+                content = f.read()
+                contributes_count = content.count('"contributes"')
+                activation_count = content.count('"activationEvents"')
+        except:
+            pass
+
+    # Count TypeScript source files
+    ts_files = run_cmd(f"find . -name '*.ts' -not -path './node_modules/*' -type f 2>/dev/null | wc -l", code_path)
+    ts_count = int(ts_files[0]) if ts_files and ts_files[0].isdigit() else 0
+
+    # Count command definitions in TypeScript
+    commands = run_cmd(f"grep -r 'registerCommand' --include='*.ts' . 2>/dev/null | wc -l", code_path)
+    cmd_count = int(commands[0]) if commands and commands[0].isdigit() else 0
+
+    confidence = "high" if contributes_count > 0 and activation_count > 0 else "medium" if ts_count > 0 else "low"
+
+    return {
+        "framework": "vscode-extension",
+        "confidence": confidence,
+        "typescript_files": ts_count,
+        "commands_found": cmd_count,
+        "has_contributes": contributes_count > 0,
+        "has_activation_events": activation_count > 0,
+    }
+
+
+def get_patterns_for_type(project_type, framework_info):
+    """Return search patterns based on project type and framework."""
+    patterns_map = {
+        # CLI patterns
+        "cobra-go": {
+            "public_api": "rg '\\.(AddCommand|Flags|PersistentFlags)\\(' --type go",
+            "commands": "grep -r 'AddCommand(' --include='*.go'",
+            "flags": "grep -r '\\.Flags()' --include='*.go' | grep -E 'StringVar|BoolVar|IntVar'",
+            "description": "Go CLI using Cobra framework"
+        },
+        "argparse": {
+            "public_api": "rg '(ArgumentParser|add_argument|add_subparsers)' --type py",
+            "parsers": "grep -r 'ArgumentParser' --include='*.py'",
+            "arguments": "grep -r 'add_argument(' --include='*.py'",
+            "subparsers": "grep -r 'add_subparsers(' --include='*.py'",
+            "description": "Python CLI using argparse (standard library)"
+        },
+        "click": {
+            "public_api": "rg '@click\\.(command|option|argument|group)' --type py",
+            "decorators": "grep -r '@click\\.' --include='*.py'",
+            "commands": "grep -r '@click\\.command()' --include='*.py'",
+            "description": "Python CLI using Click framework"
+        },
+        "bash-dispatch": {
+            "public_api": "grep -r '^cmd_' --include='*.sh'",
+            "commands": "grep -n '^cmd_[a-z_]*() {' *.sh",
+            "dispatch": "grep -n 'case' *.sh | grep ' in'",
+            "description": "Bash CLI with function-based command dispatch"
+        },
+        # Python library patterns
+        "python-library": {
+            "public_api": "grep -r '__all__' --include='*.py'",
+            "classes": "grep -r '^class ' --include='*.py'",
+            "functions": "grep -r '^def ' --include='*.py' | grep -v '    def'",
+            "exports": "grep -r 'from.*import\\|import ' --include='*.py' | head -20",
+            "description": "Python library/package"
+        },
+        # TypeScript extension patterns
+        "vscode-extension": {
+            "public_api": "grep -r 'registerCommand\\|registerCodeLensProvider' --include='*.ts'",
+            "commands": "grep 'commands' package.json",
+            "settings": "grep 'configuration' package.json",
+            "activation": "grep 'activationEvents' package.json",
+            "exports": "grep -r 'export ' --include='*.ts' | head -20",
+            "description": "VS Code extension"
+        },
+    }
+
+    return patterns_map.get(framework_info.get("framework", "unknown"), {})
+
+
+def detect_code_structure(code_path):
+    """
+    Main detection function.
+    Returns: {
+        type: str (cli/python-library/vscode-extension),
+        framework: str,
+        confidence: str (high/medium/low),
+        patterns: dict,
+        message: str
+    }
+    """
+    if not os.path.isdir(code_path):
+        return {
+            "type": "unknown",
+            "framework": "unknown",
+            "confidence": "none",
+            "error": f"Path does not exist: {code_path}"
+        }
+
+    project_type = detect_project_type(code_path)
+
+    if project_type == "cli":
+        fw_info = detect_cli_framework(code_path)
+        if not fw_info:
+            return {
+                "type": "cli",
+                "framework": "unknown",
+                "confidence": "low",
+                "message": "CLI project detected but framework not identified"
+            }
+        patterns = get_patterns_for_type("cli", fw_info)
+        return {
+            "type": "cli",
+            "framework": fw_info["framework"],
+            "confidence": fw_info["confidence"],
+            "files_found": fw_info["files_found"],
+            "patterns": patterns,
+            "message": f"Detected {fw_info['framework']} CLI in {fw_info['files_found']} files ({fw_info['confidence']} confidence)"
+        }
+
+    elif project_type == "python-library":
+        lib_info = detect_python_library(code_path)
+        patterns = get_patterns_for_type("python-library", lib_info)
+        return {
+            "type": "python-library",
+            "framework": "python-library",
+            "confidence": lib_info["confidence"],
+            "classes_found": lib_info["classes_found"],
+            "functions_found": lib_info["functions_found"],
+            "patterns": patterns,
+            "message": f"Detected Python library with {lib_info['classes_found']} classes and {lib_info['functions_found']} functions ({lib_info['confidence']} confidence)"
+        }
+
+    elif project_type == "vscode-extension":
+        ext_info = detect_typescript_extension(code_path)
+        patterns = get_patterns_for_type("vscode-extension", ext_info)
+        return {
+            "type": "vscode-extension",
+            "framework": "vscode-extension",
+            "confidence": ext_info["confidence"],
+            "typescript_files": ext_info["typescript_files"],
+            "commands_found": ext_info["commands_found"],
+            "patterns": patterns,
+            "message": f"Detected VS Code extension with {ext_info['commands_found']} commands ({ext_info['confidence']} confidence)"
+        }
+
+    else:
+        return {
+            "type": "generic",
+            "framework": "generic",
+            "confidence": "low",
+            "message": "Generic code project detected (type not specifically identified)"
+        }
 
 
 if __name__ == "__main__":
     code_path = sys.argv[1] if len(sys.argv) > 1 else "."
-    result = detect_framework(code_path)
+    result = detect_code_structure(code_path)
     print(json.dumps(result, indent=2))
