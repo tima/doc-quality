@@ -103,17 +103,19 @@ If doc set has <10 files, skip progress (fast enough).
 
 ### Search Tool
 
-Check for ast-grep availability:
+Check for sg (ast-grep) availability:
 
 ```bash
-command -v ast-grep >/dev/null 2>&1 && echo "ast-grep available" || echo "ast-grep not found"
+command -v sg >/dev/null 2>&1 && echo "sg available" || echo "sg not found"
 ```
 
-- If available: use `ast-grep` (via `sg` command) for structural analysis of code examples within docs (when docs contain code in ast-grep-supported languages: Python, Go, JS, Rust, etc.).
-- If not found: "Note: `ast-grep` is not installed. Code example searches will use `rg`/`grep`. See https://ast-grep.github.io/guide/quick-start.html"
-- If found: proceed silently.
+- If available: Use `sg` for structural analysis of code examples within docs (when docs contain code in sg-supported languages: Python, Go, JavaScript, Rust, TypeScript, etc.).
+- If not found: "Note: `sg` (ast-grep) is not installed. Code example analysis will use `rg`/`grep`. See https://ast-grep.github.io/guide/quick-start.html"
+- If found: proceed silently (no need to announce availability).
 
-**Note:** ast-grep does not support Markdown. For code block language tag checks (Visual Formatting #10), use: `rg '^\`\`\`$' <path>` — this finds fenced code blocks missing a language tag.
+**Usage within quality dimensions:**
+- When auditing code examples (Example Quality dimension), if docs contain Python/Go/JS/etc. code blocks and sg is available, use `sg --lang <detected> -p '<pattern>'` to structurally validate example syntax.
+- For code block language tag checks (Visual Formatting dimension), use: `rg '^\`\`\`$' <path>` — this finds fenced code blocks missing a language tag (sg doesn't parse Markdown).
 
 Follow these **Strict Adherence Rules**:
 
@@ -287,13 +289,56 @@ For each group:
 
 **[Silent — no output to user. Run before screen summary and full report.]**
 
-Perform these 3 verification checks before presenting any audit results. These prevent hallucination (paraphrased quotes, uncalibrated confidence, count mismatches):
+Before presenting any audit results, perform these 3 verification checks. These prevent hallucination (paraphrased quotes, uncalibrated confidence, count mismatches).
 
-1. **Quote traceability:** For every finding, the "Current Text" value must appear verbatim (or with only whitespace normalization) in the audited doc. Read back the relevant doc sections and confirm. Remove or rewrite any finding where the quoted text cannot be located.
+#### 1. Quote Traceability
 
-2. **Confidence calibration:** High Confidence findings must have a style guide rule citation (e.g., "Plain Language #1" or "Clarity #3"). If a finding has no rule citation, it must be labeled Medium Confidence or Suggestion. Scan all High Confidence findings; downgrade any without a cited rule.
+For every finding with a "Current Text" value, the quote must appear verbatim (or with only whitespace normalization) in the audited doc. Re-read the relevant doc sections and confirm.
 
-3. **Count consistency:** Count Critical, Moderate, and Minor/Suggestion findings in the body. These must equal the summary numbers exactly. Correct the summary before output.
+**Process:**
+- For each finding, locate the file and section it cites
+- Search for the quoted text in that section
+- Accept only exact matches (whitespace normalization only: collapsing multiple spaces, normalizing newlines within a quote)
+- If the exact quote is not found, do one of:
+  - Remove the finding entirely (false positive)
+  - Rewrite the quote to match actual text (misquoted)
+  - Downgrade confidence to Low (unverified)
+
+**Example:**
+- Finding quotes: "Simply run the command"
+- Doc text: "Simply run the following command"
+- Result: Quote does not match exactly → downgrade to Low confidence or remove
+
+#### 2. Confidence Calibration
+
+High Confidence findings must have a style guide rule citation (e.g., "Plain Language #1", "Clarity #3", or the rule name from the project style guide). If a finding has no rule citation, downgrade it.
+
+**Process:**
+- Scan all High Confidence findings in the report
+- For each one, check: is there a style guide reference?
+- If NO citation: downgrade to Medium Confidence or relabel as "Suggestion"
+- If YES citation: verify the citation is accurate (rule exists, finding matches rule)
+
+**Example:**
+- Finding: "CRITICAL (High Confidence): Sentence exceeds 40 words"
+- Citation: "Plain Language #1" ✓ (correct, rule exists)
+- Finding: "CRITICAL (High Confidence): This paragraph is confusing"
+- Citation: None ✗ → Downgrade to "MODERATE (Medium Confidence)"
+
+#### 3. Count Consistency
+
+Tally all findings by severity (Critical, Moderate, Minor/Suggestion) in the report body. These counts must match the summary numbers exactly.
+
+**Process:**
+- Count each severity level in the "Findings by Dimension" sections
+- Compare to the summary section at the top of the report
+- If counts don't match, correct the summary before output
+- Example:
+  ```
+  Report body: 1 Critical, 3 Moderate, 2 Minor
+  Summary says: 1 Critical, 4 Moderate, 2 Minor ✗ (Moderate count wrong)
+  Action: Correct summary to "3 Moderate"
+  ```
 
 ### Screen Summary (always show)
 
