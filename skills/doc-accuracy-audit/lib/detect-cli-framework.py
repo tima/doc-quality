@@ -27,7 +27,7 @@ def run_cmd(cmd, cwd=None):
 
 def detect_project_type(code_path):
     """Determine if project is CLI, Python library, TypeScript extension, or generic code."""
-    # Check for TypeScript/VS Code extension markers
+    # Check for TypeScript/VS Code extension markers FIRST
     if os.path.isfile(os.path.join(code_path, "package.json")):
         try:
             with open(os.path.join(code_path, "package.json")) as f:
@@ -42,23 +42,36 @@ def detect_project_type(code_path):
         except:
             pass
 
-    # Check for Python library markers (setup.py, pyproject.toml, __init__.py)
+    # Check for CLI framework signatures BEFORE library checks
+    # This ensures ansible-creator (which has setup.py but is a CLI) gets detected as CLI
+    cli_count = 0
+    # argparse/Click
+    arg_matches = run_cmd(f"grep -r 'ArgumentParser\\|@click\\.' --include='*.py' . 2>/dev/null | wc -l", code_path)
+    if arg_matches and arg_matches[0].isdigit():
+        cli_count += int(arg_matches[0])
+    # Cobra/Go
+    cobra_matches = run_cmd(f"grep -r 'AddCommand(' --include='*.go' . 2>/dev/null | wc -l", code_path)
+    if cobra_matches and cobra_matches[0].isdigit():
+        cli_count += int(cobra_matches[0])
+    # Bash
+    bash_matches = run_cmd(f"grep -r '^cmd_' --include='*.sh' . 2>/dev/null | wc -l", code_path)
+    if bash_matches and bash_matches[0].isdigit():
+        cli_count += int(bash_matches[0])
+
+    if cli_count > 0:
+        return "cli"  # Found CLI framework markers
+
+    # Now check for Python library markers (setup.py, pyproject.toml, __init__.py)
     if os.path.isfile(os.path.join(code_path, "setup.py")) or \
        os.path.isfile(os.path.join(code_path, "pyproject.toml")) or \
        os.path.isfile(os.path.join(code_path, "setup.cfg")):
-        # Count Python files to distinguish library from CLI
-        py_files = run_cmd(f"find . -name '*.py' -type f 2>/dev/null | wc -l", code_path)
-        py_count = int(py_files[0]) if py_files and py_files[0].isdigit() else 0
-        if py_count > 10:
-            return "python-library"
-        return "cli"  # Small Python projects likely CLI
+        # If no CLI markers found, treat as library
+        return "python-library"
 
     # Check for __init__.py (indicator of Python package/library)
     init_count = len(run_cmd(f"find . -name '__init__.py' -type f 2>/dev/null", code_path))
     if init_count > 0:
-        py_count = int(run_cmd(f"find . -name '*.py' -type f 2>/dev/null | wc -l", code_path)[0])
-        if py_count > 5:
-            return "python-library"
+        return "python-library"
 
     return "cli"  # Default to CLI detection
 
