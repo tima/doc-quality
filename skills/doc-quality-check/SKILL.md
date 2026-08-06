@@ -13,11 +13,13 @@ Run the complete documentation quality pipeline: accuracy audit -> quality audit
 ## What This Does
 
 Orchestrates three skills in sequence:
-1. `/doc-accuracy-audit` - Compare docs against source of truth
+1. `/doc-accuracy-audit` - Compare docs against source of truth (auto-detects CLI framework or Terraform provider)
 2. `/doc-quality-audit` - Evaluate style, tone, clarity
 3. `/doc-quality-revise` - Apply corrections interactively
 
 All reports are timestamped to preserve audit history across runs.
+
+**Note:** For accuracy audit, you don't need to specify `--type` — the skill will auto-detect whether your code is a CLI tool (Cobra, argparse, Click, Bash) or Terraform provider. Provide `--type` only if auto-detection fails.
 
 ## Arguments
 
@@ -33,7 +35,7 @@ Optional flags:
 - `--parallel` - Run accuracy + quality audits concurrently (faster)
 - `--dry-run` - Preview mode, no files modified (passed to all skills)
 - `--since <git-ref>` - Incremental mode, audit only changed files (passed to audit skills)
-- `--type <cli|terraform|api>` - Project type (passed to accuracy audit, skip type prompt)
+- `--type <cli|terraform|api>` - Project type (optional; accuracy audit will auto-detect if not provided)
 - `--source <path-or-url>` - Source of truth (passed to accuracy audit, skip source prompt)
 - `--dimensions <core|comprehensive>` - Quality dimensions (passed to quality audit, skip dimension prompt)
 
