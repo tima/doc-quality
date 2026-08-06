@@ -6,7 +6,7 @@
 
 **Architecture:** Single skill file containing frontmatter, embedded baseline style guide (4 sections distilled from IBM/PatternFly/Red Hat guides), four-phase workflow instructions (context gathering, scope confirmation, audit execution, report delivery), and subagent dispatch logic for large doc sets.
 
-**Tech Stack:** Markdown skill file, follows Claude Code skill format with frontmatter
+**Tech Stack:** Markdown skill file, follows agent skill format with frontmatter
 
 ---
 
@@ -826,7 +826,7 @@ git commit -m "test: add sample docs with known quality issues for testing"
 
 - [ ] **Step 1: Invoke skill on CLI test doc**
 
-In Claude Code, run:
+Run the skill:
 ```
 /doc-quality-audit
 ```
@@ -889,7 +889,7 @@ If any finding lacks these elements, fix skill instructions.
 
 - [ ] **Step 1: Invoke skill on Terraform test doc**
 
-In Claude Code, run:
+Run the skill:
 ```
 /doc-quality-audit
 ```
@@ -935,7 +935,7 @@ done
 
 - [ ] **Step 2: Invoke skill on large doc set**
 
-In Claude Code, run:
+Run the skill:
 ```
 /doc-quality-audit
 ```

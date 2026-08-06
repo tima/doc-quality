@@ -22,7 +22,7 @@
 - Symlink created successfully
 - Target resolves to: `/Users/tappnel/projects/doc-quality-skills/doc-quality-check`
 - Files present: `README.md`, `SKILL.md`
-- Skill appears in Claude Code skill list
+- Skill appears in skill list
 
 ## Test 2: File Structure
 
@@ -138,7 +138,7 @@ Each example includes:
 **Installation:** SUCCESS
 - Symlink created correctly
 - Files accessible
-- Skill detected by Claude Code
+- Skill detected by agent system
 
 **Documentation:** COMPLETE
 - SKILL.md contains comprehensive workflow instructions
@@ -157,7 +157,7 @@ Each example includes:
 
 This skill is an orchestrator - it doesn't perform audits itself, but coordinates three existing skills. Testing actual execution would require:
 
-1. Claude Code interpreting SKILL.md instructions
+1. Agent system interpreting SKILL.md instructions
 2. Sample documentation to audit
 3. Running through each phase
 
