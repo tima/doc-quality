@@ -61,6 +61,12 @@ Also clarify in Step 1 validation: "After flag parsing, determine which phases t
 
 ---
 
+## Completed (LOW Priority)
+
+✓ **L2: Step numbering standardization** — Renamed Phase N: to Step N: in doc-quality-revise to match all other skills (doc-accuracy-audit, doc-quality-audit, doc-quality-check).
+
+---
+
 ## Backlog (LOW Priority)
 
 ### L1: Limitations Consolidation
@@ -70,19 +76,13 @@ Also clarify in Step 1 validation: "After flag parsing, determine which phases t
 
 ---
 
-### L2: Step Numbering Standardization
-**Issue:** Some skills use "Step 1", some use "Phase 1", some mix "Step 1.1" + "Substep". Inconsistency across skills.  
-**Recommendation:** Standardize on one convention (e.g., "Step N: [Name]", substeps as "Step N.[letter]: [Name]" or "Substep N.1: [Name]").
-
----
-
 ### L3: Leading Word Cleanup (Lower Impact)
 **Identified in review but low yield:**
 - "project type" appears 14x across skill. Context-specific, acceptable repetition.
 - "source of truth" appears 22x. Meaningful repetition in procedural steps; collapsing would hurt clarity.
 - "Framework auto-detection" vs "Detection" — mixed usage. Minor token save if collapsed; low priority.
 
-**Recommendation:** Skip unless undertaking full token-optimization pass.
+**Status:** Low-yield. Collapse would hurt clarity for marginal token savings. Skip.
 
 ---
 
@@ -92,7 +92,8 @@ Also clarify in Step 1 validation: "After flag parsing, determine which phases t
 |----------|-------|--------|
 | HIGH (completed) | 6 | ✓ Done |
 | MEDIUM (backlog) | 4 | — Review |
-| LOW (backlog) | 3 | — Deferred |
+| LOW (completed) | 1 | ✓ Done |
+| LOW (backlog) | 2 | — Deferred |
 | **Total** | **13** | — |
 
 ---
