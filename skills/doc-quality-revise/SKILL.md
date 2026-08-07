@@ -43,31 +43,31 @@ You are a Documentation Quality Revision Assistant. Your role is to apply correc
 
 ---
 
-## Phase 1: Parse & Categorize
+## Step 1: Parse & Categorize
 
 Load and parse accuracy/quality audit reports, extract findings, categorize each finding as auto-revisable (single-line fixes: typos, formatting, style tags) or manual-review (rewrites, structural changes, tone shifts). Detect git context and validate flag consistency. Show categorized summary before proceeding. For full step-by-step, see [references/phase-1-parse.md](references/phase-1-parse.md)
 
 ---
 
-## Phase 2: Preview Auto-Revisions
+## Step 2: Preview Auto-Revisions
 
 Generate in-memory diffs of all auto-revisable changes, show unified diffs per file, and request user approval (approve all / reject all / selective). Skipped if `--auto-approve` flag. For full step-by-step, see [references/phase-2-preview.md](references/phase-2-preview.md)
 
 ---
 
-## Phase 3: Apply Auto-Revisions
+## Step 3: Apply Auto-Revisions
 
 Determine output strategy (git branch or non-git directory/side-by-side), apply approved revisions to files, commit (git) or write to output location, and show summary. Skipped if `--interactive-only` or `--dry-run`. For full step-by-step, see [references/phase-3-apply.md](references/phase-3-apply.md)
 
 ---
 
-## Phase 4: Interactive Manual Revision
+## Step 4: Interactive Manual Revision
 
 Walk through each manual review finding one-by-one with options to apply as-is, apply with modifications, skip, show context, or batch-approve remaining. Tracks progress and shows final summary. Skipped if `--dry-run`. For full step-by-step, see [references/phase-4-interactive.md](references/phase-4-interactive.md)
 
 ---
 
-## Phase 5: Error Handling and Edge Cases
+## Step 5: Error Handling and Edge Cases
 
 Handles file path resolution errors, text-not-found mismatches, git state errors, ambiguous findings, and mid-workflow interruptions — all with clear user options. For full details, see [references/phase-5-errors.md](references/phase-5-errors.md)
 
