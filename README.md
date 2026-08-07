@@ -75,69 +75,14 @@ Documentation drifts from code: users hit undocumented features, missing command
 
 ## Installation
 
-### System Requirements
+Skills work with any tool supporting agent skills. Ripgrep and ast-grep are optional dependencies that improve search quality (see [INSTALL.md](INSTALL.md) for system requirements).
 
-**Required:**
-- `rg` (ripgrep) — Fast regex search for source code
-  - macOS: `brew install ripgrep`
-  - CentOS/RHEL: `yum install ripgrep`
-  - See https://github.com/BurntSummaryxyz/ripgrep#installation
-
-- `python3` — For project type detection and Python library auditing
-
-**Optional:**
-- `sg` (ast-grep) — Structural code search, planned for v2 (schema-based auditing)
-  - See https://ast-grep.github.io/guide/quick-start.html
-
-### Via npx skills (Recommended)
-
+**Quick start:**
 ```bash
-# All skills, user scope (available in all sessions)
 npx skills add tima/doc-quality -g
-
-# All skills, project scope (this project only)
-npx skills add tima/doc-quality
-
-# Specific skills only
-npx skills add tima/doc-quality --skill doc-accuracy-audit -g
-npx skills add tima/doc-quality --skill doc-quality-audit -g
-npx skills add tima/doc-quality --skill doc-quality-revise -g
-npx skills add tima/doc-quality --skill doc-quality-check -g
 ```
 
-### Local Development
-
-```bash
-git clone https://github.com/tima/doc-quality.git ~/projects/doc-quality
-ln -sf ~/projects/doc-quality/skills/doc-accuracy-audit ~/.claude/skills/doc-accuracy-audit
-ln -sf ~/projects/doc-quality/skills/doc-quality-audit ~/.claude/skills/doc-quality-audit
-ln -sf ~/projects/doc-quality/skills/doc-quality-revise ~/.claude/skills/doc-quality-revise
-ln -sf ~/projects/doc-quality/skills/doc-quality-check ~/.claude/skills/doc-quality-check
-```
-
-(Replace `~/.claude/skills/` with your tool's skills directory if different.)
-
-### Uninstall
-
-**Registry installed:**
-```bash
-npx skills remove doc-accuracy-audit --global
-npx skills remove doc-quality-audit --global
-npx skills remove doc-quality-revise --global
-npx skills remove doc-quality-check --global
-```
-
-**Locally symlinked:**
-```bash
-rm ~/.claude/skills/doc-accuracy-audit
-rm ~/.claude/skills/doc-quality-audit
-rm ~/.claude/skills/doc-quality-revise
-rm ~/.claude/skills/doc-quality-check
-```
-
-(Replace `~/.claude/skills/` with your tool's skills directory if different.)
-
-See [INSTALL.md](INSTALL.md) for detailed installation, updating, and troubleshooting.
+For detailed installation, updating, local development, and troubleshooting, see [INSTALL.md](INSTALL.md).
 
 ## License
 
