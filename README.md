@@ -75,7 +75,7 @@ Documentation drifts from code: users hit undocumented features, missing command
 
 ## Installation
 
-Skills work with any tool supporting agent skills. Ripgrep and ast-grep are optional dependencies that improve search quality (see [INSTALL.md](INSTALL.md) for system requirements).
+Skills work with any tool supporting agent skills. ripgrep and ast-grep are optional dependencies that improve search quality (see [INSTALL.md](INSTALL.md) for system requirements).
 
 **Quick start:**
 ```bash
